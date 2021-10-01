@@ -1,4 +1,4 @@
-# JupyterLite
+# JupyterLite - test
 
 [![ci-badge]][ci] [![binder-badge]][binder] [![docs-badge]][docs]
 
