@@ -1,5 +1,5 @@
 {
-  "name": "@jupyterlite/root",
+  "name": "@jupyterlite/root-test",
   "version": "0.1.0a9",
   "private": true,
   "homepage": "https://github.com/jupyterlite/jupyterlite",
