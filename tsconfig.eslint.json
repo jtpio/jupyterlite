@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfigbase",
+  "include": [
+    "packages/**/*",
+    "app/**/*",
+    "buildutils/**/*",
+    "ui-tests/**/*",
+    "docs/**/*",
+    ".eslintrc.js"
+  ],
+  "compilerOptions": {
+    "types": ["jest"]
+  }
+}

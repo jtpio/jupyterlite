@@ -17,7 +17,7 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: 'tsconfigbase.json',
+    project: 'tsconfig.eslint.json',
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint', 'jest'],
@@ -46,7 +46,7 @@ module.exports = {
     ],
     'jest/no-done-callback': 'off',
     curly: ['error', 'all'],
-    eqeqeq: ['error'],
+    eqeqeq: 'error',
     'prefer-arrow-callback': 'error',
   },
   settings: {
