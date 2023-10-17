@@ -111,6 +111,9 @@ include = [
     "/jupyterlite_core",
     "/*.md",
 ]
+[tool.hatch.build.targets.sdist.force-include]
+"../../README.md" = "README.md"
+
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
@@ -119,3 +122,6 @@ artifacts = [
 include = [
     "/jupyterlite_core",
 ]
+
+[tool.hatch.build.targets.wheel.force-include]
+"../../README.md" = "README.md"
