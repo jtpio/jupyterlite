@@ -1,8 +1,6 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { PageConfig } from '@jupyterlab/coreutils';
-
 import { Contents as ServerContents, KernelSpec } from '@jupyterlab/services';
 
 import {
@@ -29,39 +27,6 @@ import { ISessions, Sessions } from '@jupyterlite/session';
 import { ISettings, Settings } from '@jupyterlite/settings';
 
 import { ITranslation, Translation } from '@jupyterlite/translation';
-
-import { ILocalForage, ensureMemoryStorage } from '@jupyterlite/localforage';
-
-import localforage from 'localforage';
-
-/**
- * The localforage plugin
- */
-const localforagePlugin: JupyterLiteServerPlugin<ILocalForage> = {
-  id: '@jupyterlite/server-extension:localforage',
-  autoStart: true,
-  provides: ILocalForage,
-  activate: (app: JupyterLiteServer) => {
-    return { localforage };
-  },
-};
-
-/**
- * The volatile localforage memory plugin
- */
-const localforageMemoryPlugin: JupyterLiteServerPlugin<void> = {
-  id: '@jupyterlite/server-extension:localforage-memory-storage',
-  autoStart: true,
-  requires: [ILocalForage],
-  activate: async (app: JupyterLiteServer, forage: ILocalForage) => {
-    if (JSON.parse(PageConfig.getOption('enableMemoryStorage') || 'false')) {
-      console.warn(
-        'Memory storage fallback enabled: contents and settings may not be saved',
-      );
-      await ensureMemoryStorage(forage.localforage);
-    }
-  },
-};
 
 /**
  * A plugin providing the routes for the config section.
