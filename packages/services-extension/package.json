@@ -38,7 +38,11 @@
     "watch": "tsc -b --watch"
   },
   "dependencies": {
-    "@jupyterlab/services": "~7.4.0-beta.0"
+    "@jupyterlab/coreutils": "~6.4.0-beta.0",
+    "@jupyterlab/services": "~7.4.0-beta.0",
+    "@jupyterlite/contents": "^0.6.0-alpha.2",
+    "@jupyterlite/kernel": "^0.6.0-alpha.2",
+    "@jupyterlite/localforage": "^0.6.0-alpha.2"
   },
   "devDependencies": {
     "rimraf": "~5.0.1",

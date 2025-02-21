@@ -3795,6 +3795,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jupyterlab/services-extension@npm:~4.4.0-beta.0":
+  version: 4.4.0-beta.0
+  resolution: "@jupyterlab/services-extension@npm:4.4.0-beta.0"
+  dependencies:
+    "@jupyterlab/services": ^7.4.0-beta.0
+    "@lumino/coreutils": ^2.2.0
+  checksum: 7f0ea7dd3b9e811043115fe59f30a464de165addd1de38b9e1ec9abd36147c28d55a01cc72f04f0fa9cf7a83c2b9b2fbd0830e3acd8e355155943611105d0212
+  languageName: node
+  linkType: hard
+
 "@jupyterlab/services@npm:^7.4.0-beta.0, @jupyterlab/services@npm:~7.4.0-beta.0":
   version: 7.4.0-beta.0
   resolution: "@jupyterlab/services@npm:7.4.0-beta.0"
@@ -4384,6 +4394,7 @@ __metadata:
     "@jupyterlab/pdf-extension": ~4.4.0-beta.0
     "@jupyterlab/rendermime-extension": ~4.4.0-beta.0
     "@jupyterlab/running-extension": ~4.4.0-beta.0
+    "@jupyterlab/services-extension": ~4.4.0-beta.0
     "@jupyterlab/settingeditor-extension": ~4.4.0-beta.0
     "@jupyterlab/shortcuts-extension": ~5.2.0-beta.0
     "@jupyterlab/statusbar-extension": ~4.4.0-beta.0
@@ -4868,6 +4879,16 @@ __metadata:
     mock-socket: ^9.3.1
     rimraf: ~5.0.1
     ts-jest: ^29.1.1
+    typescript: ~5.1.6
+  languageName: unknown
+  linkType: soft
+
+"@jupyterlite/services-extension@workspace:packages/services-extension":
+  version: 0.0.0-use.local
+  resolution: "@jupyterlite/services-extension@workspace:packages/services-extension"
+  dependencies:
+    "@jupyterlab/services": ~7.4.0-beta.0
+    rimraf: ~5.0.1
     typescript: ~5.1.6
   languageName: unknown
   linkType: soft

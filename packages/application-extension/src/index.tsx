@@ -28,6 +28,13 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { ITranslator } from '@jupyterlab/translation';
 
+import {
+  BroadcastChannelWrapper,
+  IBroadcastChannelWrapper,
+} from '@jupyterlite/contents';
+
+import { IServiceWorkerManager, ServiceWorkerManager } from '@jupyterlite/server';
+
 import { downloadIcon, linkIcon } from '@jupyterlab/ui-components';
 
 import { liteIcon, liteWordmark } from '@jupyterlite/ui-components';
@@ -289,6 +296,54 @@ const downloadPlugin: JupyterFrontEndPlugin<void> = {
 };
 
 /**
+ * A plugin for handling communication with the Emscpriten file system.
+ */
+const emscriptenFileSystemPlugin: JupyterFrontEndPlugin<IBroadcastChannelWrapper> = {
+  id: '@jupyterlite/application-extension:emscripten-filesystem',
+  autoStart: true,
+  optional: [IServiceWorkerManager],
+  provides: IBroadcastChannelWrapper,
+  activate: (
+    app: JupyterFrontEnd,
+    serviceWorkerRegistrationWrapper?: IServiceWorkerManager,
+  ): IBroadcastChannelWrapper => {
+    const { contents } = app.serviceManager;
+    const broadcaster = new BroadcastChannelWrapper({ contents });
+    const what = 'Kernel filesystem and JupyterLite contents';
+
+    function logStatus(msg?: string, err?: any) {
+      if (err) {
+        console.warn(err);
+      }
+      if (msg) {
+        console.warn(msg);
+      }
+      if (err || msg) {
+        console.warn(`${what} will NOT be synced`);
+      } else {
+        // eslint-disable-next-line no-console
+        console.info(`${what} will be synced`);
+      }
+    }
+
+    if (!serviceWorkerRegistrationWrapper) {
+      logStatus('JupyterLite ServiceWorker not available');
+    } else {
+      serviceWorkerRegistrationWrapper.ready
+        .then(() => {
+          broadcaster.enable();
+          logStatus();
+        })
+        .catch((err: any) => {
+          logStatus('JupyterLite ServiceWorker failed to become available', err);
+        });
+    }
+
+    return broadcaster;
+  },
+};
+
+/**
  * The main application icon.
  */
 const liteLogo: JupyterFrontEndPlugin<void> = {
@@ -444,6 +499,18 @@ const opener: JupyterFrontEndPlugin<void> = {
 };
 
 /**
+ * A plugin installing the service worker.
+ */
+const serviceWorkerPlugin: JupyterFrontEndPlugin<IServiceWorkerManager> = {
+  id: '@jupyterlite/application-extension:service-worker',
+  autoStart: true,
+  provides: IServiceWorkerManager,
+  activate: (app: JupyterFrontEnd) => {
+    return new ServiceWorkerManager();
+  },
+};
+
+/**
  * A plugin to patch the session context path so it includes the drive name.
  * TODO: investigate a better way for the kernel to be aware of the drive it is
  * associated with.
@@ -550,9 +617,11 @@ const shareFile: JupyterFrontEndPlugin<void> = {
 const plugins: JupyterFrontEndPlugin<any>[] = [
   about,
   downloadPlugin,
+  emscriptenFileSystemPlugin,
   liteLogo,
   notifyCommands,
   opener,
+  serviceWorkerPlugin,
   sessionContextPatch,
   shareFile,
 ];

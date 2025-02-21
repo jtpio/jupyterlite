@@ -1,15 +1,20 @@
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
-import { Contents as ServerContents } from '@jupyterlab/services';
+import {
+  Contents as ServerContents,
+  ContentsManager,
+  ServerConnection,
+} from '@jupyterlab/services';
 
 import { INotebookContent } from '@jupyterlab/nbformat';
 
 import { PathExt } from '@jupyterlab/coreutils';
 
+import { PromiseDelegate } from '@lumino/coreutils';
+
 import type localforage from 'localforage';
 
-import { IContents, MIME, FILE } from './tokens';
-import { PromiseDelegate } from '@lumino/coreutils';
+import { MIME, FILE } from './tokens';
 
 export type IModel = ServerContents.IModel;
 
@@ -29,19 +34,26 @@ const decoder = new TextDecoder('utf-8');
 /**
  * A class to handle requests to /api/contents
  */
-export class Contents implements IContents {
+export class Contents extends ContentsManager {
   /**
    * Construct a new localForage-powered contents provider
    */
   constructor(options: Contents.IOptions) {
+    super({
+      defaultDrive: options.defaultDrive,
+      serverSettings: options.serverSettings,
+    });
     this._localforage = options.localforage;
     this._storageName = options.storageName || DEFAULT_STORAGE_NAME;
     this._storageDrivers = options.storageDrivers || null;
     this._ready = new PromiseDelegate();
+    this.initialize().catch(console.warn);
   }
 
   /**
    * Finish any initialization after server has started and all extensions are applied.
+   *
+   * TODO: keep private?
    */
   async initialize() {
     await this.initStorage();
@@ -138,7 +150,7 @@ export class Contents implements IContents {
    *
    * @returns A promise which resolves with the created file content when the file is created.
    */
-  async newUntitled(options?: ServerContents.ICreateOptions): Promise<IModel | null> {
+  async newUntitled(options?: ServerContents.ICreateOptions): Promise<IModel> {
     const path = options?.path ?? '';
     const type = options?.type ?? 'notebook';
     const created = new Date().toISOString();
@@ -280,15 +292,16 @@ export class Contents implements IContents {
    *
    * @returns A promise which resolves with the file content.
    */
-  async get(
-    path: string,
-    options?: ServerContents.IFetchOptions,
-  ): Promise<IModel | null> {
+  async get(path: string, options?: ServerContents.IFetchOptions): Promise<IModel> {
     // remove leading slash
     path = decodeURIComponent(path.replace(/^\//, ''));
 
     if (path === '') {
-      return await this._getFolder(path);
+      const folder = await this._getFolder(path);
+      if (folder === null) {
+        throw Error(`Could not find file with path ${path}`);
+      }
+      return folder;
     }
 
     const storage = await this.storage;
@@ -298,7 +311,7 @@ export class Contents implements IContents {
     const model = (item || serverItem) as IModel | null;
 
     if (!model) {
-      return null;
+      throw Error(`Could not find content with path ${path}`);
     }
 
     if (!options?.content) {
@@ -396,7 +409,7 @@ export class Contents implements IContents {
    *
    * @returns A promise which resolves with the file content model when the file is saved.
    */
-  async save(path: string, options: Partial<IModel> = {}): Promise<IModel | null> {
+  async save(path: string, options: Partial<IModel> = {}): Promise<IModel> {
     path = decodeURIComponent(path);
 
     // process the file if coming from an upload
@@ -413,7 +426,7 @@ export class Contents implements IContents {
     }
 
     if (!item) {
-      return null;
+      throw Error(`Could not find file with path ${path}`);
     }
 
     // keep a reference to the original content
@@ -858,6 +871,12 @@ export namespace Contents {
     storageName?: string | null;
     storageDrivers?: string[] | null;
     localforage: typeof localforage;
+
+    /**
+     * Base contents manager options
+     */
+    defaultDrive?: ServerContents.IDrive;
+    serverSettings?: ServerConnection.ISettings;
   }
 }
 
