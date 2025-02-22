@@ -214,7 +214,10 @@ export class Contents extends ContentsManager implements ServerContents.IManager
         break;
       }
       default: {
-        const ext = options?.ext ?? '.txt';
+        let ext = options?.ext ?? '.txt';
+        if (!ext.startsWith('.')) {
+          ext = `.${ext}`;
+        }
         const counter = await this._incrementCounter('file');
         const mimetype = FILE.getType(ext) || MIME.OCTET_STREAM;
 

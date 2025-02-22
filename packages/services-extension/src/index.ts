@@ -100,7 +100,7 @@ const contentsManagerPlugin: ServiceManagerPlugin<Contents.IManager> = {
  * The event manager plugin.
  */
 const eventManagerPlugin: ServiceManagerPlugin<Event.IManager> = {
-  id: '@jupyterlab/services-extension:event-manager',
+  id: '@jupyterlite/services-extension:event-manager',
   description: 'The event manager plugin.',
   autoStart: true,
   provides: IEventManager,
