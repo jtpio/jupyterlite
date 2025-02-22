@@ -12,13 +12,8 @@
   },
   "license": "BSD-3-Clause",
   "author": "JupyterLite Contributors",
-  "sideEffects": [
-    "style/*.css",
-    "style/index.js"
-  ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "style": "style/index.css",
   "directories": {
     "lib": "lib/"
   },
@@ -26,8 +21,6 @@
     "lib/*.d.ts",
     "lib/*.js.map",
     "lib/*.js",
-    "style/*.css",
-    "style/index.js",
     "src/**/*.{ts,tsx}"
   ],
   "scripts": {
@@ -53,6 +46,5 @@
   },
   "jupyterlab": {
     "extension": true
-  },
-  "styleModule": "style/index.js"
+  }
 }
