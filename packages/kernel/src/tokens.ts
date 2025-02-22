@@ -3,73 +3,18 @@
 
 import type { Remote } from 'comlink';
 
-import { IObservableMap } from '@jupyterlab/observables';
-
-import { Kernel, KernelMessage, KernelSpec } from '@jupyterlab/services';
+import { KernelMessage, KernelSpec } from '@jupyterlab/services';
 
 import { Token } from '@lumino/coreutils';
 
 import { IObservableDisposable } from '@lumino/disposable';
 
-import { ISignal } from '@lumino/signaling';
-
-import { Kernels } from './kernels';
-
 import { KernelSpecs } from './kernelspecs';
-
-/**
- * The token for the kernels service.
- */
-export const IKernels = new Token<IKernels>('@jupyterlite/kernel:IKernels');
 
 /**
  * The kernel name of last resort.
  */
 export const FALLBACK_KERNEL = 'javascript';
-
-/**
- * An interface for the Kernels service.
- */
-export interface IKernels {
-  /**
-   * Signal emitted when the kernels map changes
-   */
-  readonly changed: ISignal<IKernels, IObservableMap.IChangedArgs<IKernel>>;
-
-  /**
-   * Start a new kernel.
-   *
-   * @param options The kernel startup options.
-   */
-  startNew: (options: Kernels.IKernelOptions) => Promise<Kernel.IModel>;
-
-  /**
-   * Restart a kernel.
-   *
-   * @param id The kernel id.
-   */
-  restart: (id: string) => Promise<Kernel.IModel>;
-
-  /**
-   * List the running kernels.
-   */
-  list: () => Promise<Kernel.IModel[]>;
-
-  /**
-   * Shut down a kernel.
-   *
-   * @param id The kernel id.
-   */
-  shutdown: (id: string) => Promise<void>;
-
-  /**
-   * Get a kernel by id
-   *
-   * @param id The kernel id.
-   * @returns the kernel if it exists, undefined otherwise.
-   */
-  get(id: string): Promise<IKernel | undefined>;
-}
 
 /**
  * An interface for a kernel running in the browser.

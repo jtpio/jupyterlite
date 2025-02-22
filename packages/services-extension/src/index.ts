@@ -9,10 +9,12 @@ import {
   IContentsManager,
   IDefaultDrive,
   IEventManager,
+  IKernelManager,
   IKernelSpecManager,
   INbConvertManager,
   IServerSettings,
   ISettingManager,
+  Kernel,
   KernelSpec,
   NbConvert,
   ServerConnection,
@@ -22,7 +24,12 @@ import {
 
 import { Contents as JupyterLiteContents } from '@jupyterlite/contents';
 
-import { IKernelSpecs, KernelSpecs, LiteKernelSpecs } from '@jupyterlite/kernel';
+import {
+  IKernelSpecs,
+  KernelSpecs,
+  LiteKernelManager,
+  LiteKernelSpecs,
+} from '@jupyterlite/kernel';
 
 import { ILocalForage, ensureMemoryStorage } from '@jupyterlite/localforage';
 
@@ -110,6 +117,25 @@ const eventManagerPlugin: ServiceManagerPlugin<Event.IManager> = {
     serverSettings: ServerConnection.ISettings | undefined,
   ): Event.IManager => {
     return new LocalEventManager({ serverSettings });
+  },
+};
+
+/**
+ * The kernel manager plugin.
+ */
+const kernelManagerPlugin: ServiceManagerPlugin<Kernel.IManager> = {
+  id: '@jupyterlite/services-extension:kernel-manager',
+  description: 'The kernel manager plugin.',
+  autoStart: true,
+  provides: IKernelManager,
+  requires: [IKernelSpecs],
+  optional: [IServerSettings],
+  activate: (
+    _: null,
+    kernelSpecs: IKernelSpecs,
+    serverSettings: ServerConnection.ISettings | undefined,
+  ): Kernel.IManager => {
+    return new LiteKernelManager({ kernelSpecs, serverSettings });
   },
 };
 
@@ -214,6 +240,7 @@ const settingsPlugin: ServiceManagerPlugin<Setting.IManager> = {
 export default [
   contentsManagerPlugin,
   eventManagerPlugin,
+  kernelManagerPlugin,
   kernelSpecManagerPlugin,
   liteKernelSpecManagerPlugin,
   localforagePlugin,

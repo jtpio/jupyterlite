@@ -2,7 +2,7 @@ import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
 import { IObservableMap, ObservableMap } from '@jupyterlab/observables';
 
-import { KernelAPI, Kernel, KernelMessage } from '@jupyterlab/services';
+import { KernelAPI, Kernel, KernelMessage, BaseManager } from '@jupyterlab/services';
 
 import { deserialize, serialize } from '@jupyterlab/services/lib/kernel/serialize';
 
@@ -16,7 +16,7 @@ import { Mutex } from 'async-mutex';
 
 import { Server as WebSocketServer, Client as WebSocketClient } from 'mock-socket';
 
-import { IKernel, IKernels, IKernelSpecs } from './tokens';
+import { IKernel, IKernelSpecs } from './tokens';
 
 /**
  * Use the default kernel wire protocol.
@@ -27,13 +27,14 @@ const KERNEL_WEBSOCKET_PROTOCOL =
 /**
  * A class to handle requests to /api/kernels
  */
-export class Kernels implements IKernels {
+export class LiteKernelManager extends BaseManager implements Kernel.IManager {
   /**
    * Construct a new Kernels
    *
    * @param options The instantiation options
    */
   constructor(options: Kernels.IOptions) {
+    super(options);
     const { kernelspecs } = options;
     this._kernelspecs = kernelspecs;
     // Forward the changed signal from _kernels
@@ -43,10 +44,85 @@ export class Kernels implements IKernels {
   }
 
   /**
+   * A signal emitted when there is a connection failure.
+   */
+  get connectionFailure(): ISignal<this, Error> {
+    return this._connectionFailure;
+  }
+
+  /**
+   * Test whether the manager is ready.
+   */
+  get isReady(): boolean {
+    return this._isReady;
+  }
+
+  /**
+   * A promise that fulfills when the manager is ready.
+   */
+  get ready(): Promise<void> {
+    return this._ready;
+  }
+
+  /**
    * Signal emitted when the kernels map changes
    */
   get changed(): ISignal<this, IObservableMap.IChangedArgs<IKernel>> {
     return this._changed;
+  }
+
+  /**
+   * A signal emitted when the running kernels change.
+   */
+  get runningChanged(): ISignal<this, Kernel.IModel[]> {
+    return this._runningChanged;
+  }
+
+  /**
+   * The number of running kernels.
+   */
+  get runningCount(): number {
+    return this._kernels.size;
+  }
+
+  /**
+   * Create an iterator over the most recent running kernels.
+   *
+   * @returns A new iterator over the running kernels.
+   */
+  running(): IterableIterator<Kernel.IModel> {
+    const kernels = this._kernels.values();
+
+    function* generator() {
+      for (const kernel of kernels) {
+        yield { id: kernel.id, name: kernel.name };
+      }
+    }
+    return generator();
+  }
+
+  /**
+   * Force a refresh of the running kernels.
+   *
+   * No-op
+   */
+  async refreshRunning(): Promise<void> {
+    return Promise.resolve(void 0);
+  }
+
+  /**
+   * Find a kernel by id.
+   *
+   * @param id - The id of the target kernel.
+   *
+   * @returns A promise that resolves with the kernel's model.
+   */
+  async findById(id: string): Promise<Kernel.IModel | undefined> {
+    const kernel = this._kernels.get(id);
+    if (!kernel) {
+      return;
+    }
+    return { id: kernel.id, name: kernel.name };
   }
 
   /**
@@ -223,22 +299,21 @@ export class Kernels implements IKernels {
   }
 
   /**
-   * List the running kernels.
-   */
-  async list(): Promise<Kernel.IModel[]> {
-    return [...this._kernels.values()].map((kernel) => ({
-      id: kernel.id,
-      name: kernel.name,
-    }));
-  }
-
-  /**
    * Shut down a kernel.
    *
    * @param id The kernel id.
    */
   async shutdown(id: string): Promise<void> {
     this._kernels.delete(id)?.dispose();
+  }
+
+  /**
+   * Shut down all kernels.
+   *
+   * @returns A promise that resolves when all of the kernels are shut down.
+   */
+  async shutdownAll(): Promise<void> {
+    await Promise.all([...this._kernels.keys()].map((id) => this.shutdown(id)));
   }
 
   /**
@@ -253,6 +328,10 @@ export class Kernels implements IKernels {
   private _kernelClients = new ObservableMap<Set<string>>();
   private _kernelspecs: IKernelSpecs;
   private _changed = new Signal<this, IObservableMap.IChangedArgs<IKernel>>(this);
+  private _runningChanged = new Signal<this, Kernel.IModel[]>(this);
+  private _isReady = false;
+  private _connectionFailure = new Signal<this, Error>(this);
+  private _ready: Promise<void> = Promise.resolve(void 0);
 }
 
 /**
@@ -260,11 +339,11 @@ export class Kernels implements IKernels {
  */
 export namespace Kernels {
   /**
-   * Options to create a new Kernels.
+   * The options used to initialize a KernelManager.
    */
-  export interface IOptions {
+  export interface IOptions extends BaseManager.IOptions {
     /**
-     * The kernel specs service.
+     * The in-browser kernel specs service.
      */
     kernelspecs: IKernelSpecs;
   }
