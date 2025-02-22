@@ -1,6 +1,8 @@
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
-import { ServerConnection, SettingManager } from '@jupyterlab/services';
+import { ServerConnection, Setting, SettingManager } from '@jupyterlab/services';
+
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { PromiseDelegate } from '@lumino/coreutils';
 
@@ -8,7 +10,10 @@ import * as json5 from 'json5';
 
 import type localforage from 'localforage';
 
-import { IPlugin, ISettings, SettingsFile } from './tokens';
+/**
+ * The settings file to request
+ */
+export type SettingsFile = 'all.json' | 'all_federated.json';
 
 /**
  * The name of the local storage.
@@ -16,9 +21,12 @@ import { IPlugin, ISettings, SettingsFile } from './tokens';
 const DEFAULT_STORAGE_NAME = 'JupyterLite Storage';
 
 /**
- * A class to handle requests to /api/settings
+ * A class to manage settings in the browser.
  */
-export class Settings extends SettingManager implements ISettings {
+export class Settings extends SettingManager implements Setting.IManager {
+  /**
+   * Create a new settings service.
+   */
   constructor(options: Settings.IOptions) {
     super({
       serverSettings: options.serverSettings,
@@ -89,21 +97,26 @@ export class Settings extends SettingManager implements ISettings {
    * @param pluginId the id of the plugin
    *
    */
-  async get(pluginId: string): Promise<IPlugin | undefined> {
-    const all = await this.getAll();
-    const settings = all.settings as IPlugin[];
-    const setting = settings.find((setting: IPlugin) => {
+  async fetch(pluginId: string): Promise<ISettingRegistry.IPlugin> {
+    const all = await this.list();
+    const settings = all.values as ISettingRegistry.IPlugin[];
+    const setting = settings.find((setting: ISettingRegistry.IPlugin) => {
       return setting.id === pluginId;
     });
+    if (!setting) {
+      throw new Error(`Setting ${pluginId} not found`);
+    }
     return setting;
   }
 
   /**
    * Get all the settings
    */
-  async getAll(): Promise<{ settings: IPlugin[] }> {
+  async list(
+    query?: 'ids',
+  ): Promise<{ ids: string[]; values: ISettingRegistry.IPlugin[] }> {
     const allCore = await this._getAll('all.json');
-    let allFederated: IPlugin[] = [];
+    let allFederated: ISettingRegistry.IPlugin[] = [];
     try {
       allFederated = await this._getAll('all_federated.json');
     } catch {
@@ -127,7 +140,20 @@ export class Settings extends SettingManager implements ISettings {
         };
       }),
     );
-    return { settings };
+
+    // format the settings
+    const ids = settings.map((plugin: ISettingRegistry.IPlugin) => plugin.id) ?? [];
+
+    let values: ISettingRegistry.IPlugin[] = [];
+    if (!query) {
+      values =
+        settings.map((plugin: ISettingRegistry.IPlugin) => {
+          plugin.data = { composite: {}, user: {} };
+          return plugin;
+        }) ?? [];
+    }
+
+    return { ids, values };
   }
 
   /**
@@ -137,18 +163,18 @@ export class Settings extends SettingManager implements ISettings {
    * @param raw The raw settings
    *
    */
-  async save(pluginId: string, raw: string): Promise<void> {
-    await (await this.storage).setItem(pluginId, raw);
+  async save(id: string, raw: string): Promise<void> {
+    await (await this.storage).setItem(id, raw);
   }
 
   /**
    * Get all the settings for core or federated plugins
    */
-  private async _getAll(file: SettingsFile): Promise<IPlugin[]> {
+  private async _getAll(file: SettingsFile): Promise<ISettingRegistry.IPlugin[]> {
     const settingsUrl = PageConfig.getOption('settingsUrl') ?? '/';
     const all = (await (
       await fetch(URLExt.join(settingsUrl, file))
-    ).json()) as IPlugin[];
+    ).json()) as ISettingRegistry.IPlugin[];
     return all;
   }
 
@@ -178,16 +204,15 @@ export namespace Settings {
  * A namespace for private data
  */
 namespace Private {
-  const _overrides: Record<string, IPlugin['schema']['default']> = JSON.parse(
-    PageConfig.getOption('settingsOverrides') || '{}',
-  );
+  const _overrides: Record<string, ISettingRegistry.IPlugin['schema']['default']> =
+    JSON.parse(PageConfig.getOption('settingsOverrides') || '{}');
 
   /**
    * Override the defaults of the schema with ones from PageConfig
    *
    * @see https://github.com/jupyterlab/jupyterlab_server/blob/v2.5.2/jupyterlab_server/settings_handler.py#L216-L227
    */
-  export function override(plugin: IPlugin): IPlugin {
+  export function override(plugin: ISettingRegistry.IPlugin): ISettingRegistry.IPlugin {
     if (_overrides[plugin.id]) {
       if (!plugin.schema.properties) {
         // probably malformed, or only provides keyboard shortcuts, etc.
