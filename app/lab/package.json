@@ -98,6 +98,7 @@
     "@jupyterlite/notebook-application-extension": "~0.6.0-alpha.2",
     "@jupyterlite/server": "~0.6.0-alpha.2",
     "@jupyterlite/server-extension": "~0.6.0-alpha.2",
+    "@jupyterlite/services-extension": "~0.6.0-alpha.2",
     "@jupyterlite/types": "~0.6.0-alpha.2",
     "@jupyterlite/ui-components": "~0.6.0-alpha.2",
     "@lezer/common": "^1.2.1",
@@ -178,6 +179,7 @@
     "@jupyterlite/notebook-application-extension": "^0.6.0-alpha.2",
     "@jupyterlite/server": "^0.6.0-alpha.2",
     "@jupyterlite/server-extension": "^0.6.0-alpha.2",
+    "@jupyterlite/services-extension": "^0.6.0-alpha.2",
     "@jupyterlite/types": "^0.6.0-alpha.2",
     "@jupyterlite/ui-components": "^0.6.0-alpha.2",
     "es6-promise": "~4.2.8",
@@ -237,7 +239,8 @@
       "@jupyterlite/application-extension",
       "@jupyterlite/iframe-extension",
       "@jupyterlite/notebook-application-extension",
-      "@jupyterlite/server-extension"
+      "@jupyterlite/server-extension",
+      "@jupyterlite/services-extension"
     ],
     "singletonPackages": [
       "@codemirror/language",

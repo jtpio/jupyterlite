@@ -77,8 +77,8 @@ const contentsManagerPlugin: ServiceManagerPlugin<Contents.IManager> = {
   activate: (
     _: null,
     defaultDrive: Contents.IDrive,
-    serverSettings: ServerConnection.ISettings,
     forage: ILocalForage,
+    serverSettings: ServerConnection.ISettings,
   ): Contents.IManager => {
     const storageName = PageConfig.getOption('contentsStorageName');
     const storageDrivers = JSON.parse(

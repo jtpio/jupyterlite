@@ -16,6 +16,7 @@
     { "path": "../notebook-application-extension" },
     { "path": "../repl-extension" },
     { "path": "../server-extension" },
+    { "path": "../services-extension" },
     { "path": "../session" },
     { "path": "../settings" },
     { "path": "../translation" },

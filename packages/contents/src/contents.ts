@@ -34,7 +34,7 @@ const decoder = new TextDecoder('utf-8');
 /**
  * A class to handle requests to /api/contents
  */
-export class Contents extends ContentsManager {
+export class Contents extends ContentsManager implements ServerContents.IManager {
   /**
    * Construct a new localForage-powered contents provider
    */
