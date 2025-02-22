@@ -10,10 +10,12 @@ import {
   IKernelSpecManager,
   INbConvertManager,
   IServerSettings,
+  ISettingManager,
   KernelSpec,
   NbConvert,
   ServerConnection,
   ServiceManagerPlugin,
+  Setting,
 } from '@jupyterlab/services';
 
 import { Contents as JupyterLiteContents } from '@jupyterlite/contents';
@@ -21,6 +23,8 @@ import { Contents as JupyterLiteContents } from '@jupyterlite/contents';
 import { KernelSpecs } from '@jupyterlite/kernel';
 
 import { ILocalForage, ensureMemoryStorage } from '@jupyterlite/localforage';
+
+import { Settings as JupyterLiteSettings } from '@jupyterlite/settings';
 
 import localforage from 'localforage';
 
@@ -32,7 +36,7 @@ import { JupyterLiteNbConvertManager } from './nbconvert';
  * The localforage plugin
  */
 const localforagePlugin: ServiceManagerPlugin<ILocalForage> = {
-  id: '@jupyterlite/server-extension:localforage',
+  id: '@jupyterlite/services-extension:localforage',
   autoStart: true,
   provides: ILocalForage,
   activate: (_: null) => {
@@ -44,7 +48,7 @@ const localforagePlugin: ServiceManagerPlugin<ILocalForage> = {
  * The volatile localforage memory plugin
  */
 const localforageMemoryPlugin: ServiceManagerPlugin<void> = {
-  id: '@jupyterlite/server-extension:localforage-memory-storage',
+  id: '@jupyterlite/services-extension:localforage-memory-storage',
   autoStart: true,
   requires: [ILocalForage],
   activate: async (_: null, forage: ILocalForage) => {
@@ -142,6 +146,35 @@ const serverSettingsPlugin: ServiceManagerPlugin<ServerConnection.ISettings> = {
   },
 };
 
+/**
+ * The settings service plugin.
+ */
+const settingsPlugin: ServiceManagerPlugin<Setting.IManager> = {
+  id: '@jupyterlite/services-extension:settings',
+  autoStart: true,
+  requires: [ILocalForage],
+  optional: [IServerSettings],
+  provides: ISettingManager,
+  activate: (
+    _: null,
+    forage: ILocalForage,
+    serverSettings: ServerConnection.ISettings | null,
+  ) => {
+    const storageName = PageConfig.getOption('settingsStorageName');
+    const storageDrivers = JSON.parse(
+      PageConfig.getOption('settingsStorageDrivers') || 'null',
+    );
+    const { localforage } = forage;
+    const settings = new JupyterLiteSettings({
+      storageName,
+      storageDrivers,
+      localforage,
+      serverSettings: serverSettings ?? undefined,
+    });
+    return settings;
+  },
+};
+
 export default [
   contentsManagerPlugin,
   kernelSpecManagerPlugin,
@@ -149,4 +182,5 @@ export default [
   localforageMemoryPlugin,
   nbConvertManagerPlugin,
   serverSettingsPlugin,
+  settingsPlugin,
 ];

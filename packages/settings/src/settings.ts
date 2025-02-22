@@ -1,5 +1,7 @@
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
+import { ServerConnection, SettingManager } from '@jupyterlab/services';
+
 import { PromiseDelegate } from '@lumino/coreutils';
 
 import * as json5 from 'json5';
@@ -16,13 +18,17 @@ const DEFAULT_STORAGE_NAME = 'JupyterLite Storage';
 /**
  * A class to handle requests to /api/settings
  */
-export class Settings implements ISettings {
+export class Settings extends SettingManager implements ISettings {
   constructor(options: Settings.IOptions) {
+    super({
+      serverSettings: options.serverSettings,
+    });
     this._localforage = options.localforage;
     this._storageName = options.storageName || DEFAULT_STORAGE_NAME;
     this._storageDrivers = options.storageDrivers || null;
 
     this._ready = new PromiseDelegate();
+    void this.initialize().catch(console.warn);
   }
 
   /**
@@ -164,6 +170,7 @@ export namespace Settings {
     localforage: typeof localforage;
     storageName?: string | null;
     storageDrivers?: string[] | null;
+    serverSettings?: ServerConnection.ISettings;
   }
 }
 

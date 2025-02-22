@@ -15,10 +15,6 @@ import {
 
 import { ISessions, Sessions } from '@jupyterlite/session';
 
-import { ISettings, Settings } from '@jupyterlite/settings';
-
-import { ITranslation, Translation } from '@jupyterlite/translation';
-
 /**
  * A plugin providing the routes for the config section.
  * TODO: implement logic to persist the config sections?
@@ -240,100 +236,6 @@ const sessionsRoutesPlugin: JupyterLiteServerPlugin<void> = {
   },
 };
 
-/**
- * The settings service plugin.
- */
-const settingsPlugin: JupyterLiteServerPlugin<ISettings> = {
-  id: '@jupyterlite/server-extension:settings',
-  autoStart: true,
-  requires: [ILocalForage],
-  provides: ISettings,
-  activate: (app: JupyterLiteServer, forage: ILocalForage) => {
-    const storageName = PageConfig.getOption('settingsStorageName');
-    const storageDrivers = JSON.parse(
-      PageConfig.getOption('settingsStorageDrivers') || 'null',
-    );
-    const { localforage } = forage;
-    const settings = new Settings({ storageName, storageDrivers, localforage });
-    app.started.then(() => settings.initialize().catch(console.warn));
-    return settings;
-  },
-};
-
-/**
- * A plugin providing the routes for the settings service.
- */
-const settingsRoutesPlugin: JupyterLiteServerPlugin<void> = {
-  id: '@jupyterlite/server-extension:settings-routes',
-  autoStart: true,
-  requires: [ISettings],
-  activate: (app: JupyterLiteServer, settings: ISettings) => {
-    // TODO: improve the regex
-    // const pluginPattern = new RegExp(/(?:@([^/]+?)[/])?([^/]+?):(\w+)/);
-    const pluginPattern = '/api/settings/((?:@([^/]+?)[/])?([^/]+?):([^:]+))$';
-
-    app.router.get(pluginPattern, async (req: Router.IRequest, pluginId: string) => {
-      const setting = await settings.get(pluginId);
-      return new Response(JSON.stringify(setting));
-    });
-
-    app.router.put(pluginPattern, async (req: Router.IRequest, pluginId: string) => {
-      const body = req.body as any;
-      const { raw } = body;
-      await settings.save(pluginId, raw);
-      return new Response(null, { status: 204 });
-    });
-
-    app.router.get('/api/settings', async (req: Router.IRequest) => {
-      const plugins = await settings.getAll();
-      return new Response(JSON.stringify(plugins));
-    });
-  },
-};
-
-/**
- * The translation service plugin.
- */
-const translationPlugin: JupyterLiteServerPlugin<ITranslation> = {
-  id: '@jupyterlite/server-extension:translation',
-  autoStart: true,
-  provides: ITranslation,
-  activate: (app: JupyterLiteServer) => {
-    const translation = new Translation();
-
-    app.router.get(
-      '/api/translations/?(.*)',
-      async (req: Router.IRequest, locale: string) => {
-        if (locale === 'default') {
-          locale = 'en';
-        }
-        const data = await translation.get(locale || 'all');
-        return new Response(JSON.stringify(data));
-      },
-    );
-
-    return translation;
-  },
-};
-
-/**
- * A plugin providing the routes for the translation service.
- */
-const translationRoutesPlugin: JupyterLiteServerPlugin<void> = {
-  id: '@jupyterlite/server-extension:translation-routes',
-  autoStart: true,
-  requires: [ITranslation],
-  activate: (app: JupyterLiteServer, translation: ITranslation) => {
-    app.router.get(
-      '/api/translations/?(.*)',
-      async (req: Router.IRequest, locale: string) => {
-        const data = await translation.get(locale || 'all');
-        return new Response(JSON.stringify(data));
-      },
-    );
-  },
-};
-
 const plugins: JupyterLiteServerPlugin<any>[] = [
   configSectionRoutesPlugin,
   kernelsPlugin,
@@ -345,10 +247,6 @@ const plugins: JupyterLiteServerPlugin<any>[] = [
   lspRoutesPlugin,
   sessionsPlugin,
   sessionsRoutesPlugin,
-  settingsPlugin,
-  settingsRoutesPlugin,
-  translationPlugin,
-  translationRoutesPlugin,
 ];
 
 export default plugins;

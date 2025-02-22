@@ -26,7 +26,7 @@ import { IMainMenu } from '@jupyterlab/mainmenu';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
-import { ITranslator } from '@jupyterlab/translation';
+import { ITranslator, TranslationManager } from '@jupyterlab/translation';
 
 import {
   BroadcastChannelWrapper,
@@ -614,6 +614,51 @@ const shareFile: JupyterFrontEndPlugin<void> = {
   },
 };
 
+/**
+ * The main translator plugin.
+ *
+ * TODO: only replace the connector when the upstream PR is merged and released:
+ * https://github.com/jupyterlab/jupyterlab/pull/17325
+ */
+const translator: JupyterFrontEndPlugin<ITranslator> = {
+  id: '@jupyterlite/application-extension:translator',
+  description: 'Provides the application translation object.',
+  autoStart: true,
+  requires: [JupyterFrontEnd.IPaths, ISettingRegistry],
+  optional: [ILabShell],
+  provides: ITranslator,
+  activate: async (
+    app: JupyterFrontEnd,
+    paths: JupyterFrontEnd.IPaths,
+    settings: ISettingRegistry,
+    labShell: ILabShell | null,
+  ) => {
+    const pluginId = '@jupyterlab/translation-extension:plugin';
+    const setting = await settings.load(pluginId);
+    const currentLocale: string = setting.get('locale').composite as string;
+    let stringsPrefix: string = setting.get('stringsPrefix').composite as string;
+    const displayStringsPrefix: boolean = setting.get('displayStringsPrefix')
+      .composite as boolean;
+    stringsPrefix = displayStringsPrefix ? stringsPrefix : '';
+    const serverSettings = app.serviceManager.serverSettings;
+    const translationManager = new TranslationManager(
+      paths.urls.translations,
+      stringsPrefix,
+      serverSettings,
+    );
+    await translationManager.fetch(currentLocale);
+
+    // Set translator to UI
+    if (labShell) {
+      labShell.translator = translationManager;
+    }
+
+    Dialog.translator = translationManager;
+
+    return translationManager;
+  },
+};
+
 const plugins: JupyterFrontEndPlugin<any>[] = [
   about,
   downloadPlugin,
@@ -624,6 +669,7 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   serviceWorkerPlugin,
   sessionContextPatch,
   shareFile,
+  translator,
 ];
 
 export default plugins;
