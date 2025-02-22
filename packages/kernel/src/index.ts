@@ -4,4 +4,5 @@
 export * from './kernel';
 export * from './kernels';
 export * from './kernelspecs';
+export * from './kernelspecs-manager';
 export * from './tokens';

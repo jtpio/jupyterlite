@@ -1,9 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { KernelSpec } from '@jupyterlab/services';
-
-import { IKernels, Kernels, IKernelSpecs, KernelSpecs } from '@jupyterlite/kernel';
+import { IKernels, Kernels, IKernelSpecs } from '@jupyterlite/kernel';
 
 import { ILicenses, Licenses } from '@jupyterlite/licenses';
 
@@ -82,58 +80,6 @@ const kernelsRoutesPlugin: JupyterLiteServerPlugin<void> = {
         return new Response(JSON.stringify(res), { status: 204 });
       },
     );
-  },
-};
-
-/**
- * The kernel spec service plugin.
- */
-const kernelSpecPlugin: JupyterLiteServerPlugin<IKernelSpecs> = {
-  id: '@jupyterlite/server-extension:kernelspec',
-  autoStart: true,
-  provides: IKernelSpecs,
-  activate: (app: JupyterLiteServer) => {
-    return new KernelSpecs();
-  },
-};
-
-/**
- * A plugin providing the routes for the kernelspec service.
- */
-const kernelSpecRoutesPlugin: JupyterLiteServerPlugin<void> = {
-  id: '@jupyterlite/server-extension:kernelspec-routes',
-  autoStart: true,
-  requires: [IKernelSpecs],
-  activate: (app: JupyterLiteServer, kernelspecs: IKernelSpecs) => {
-    app.router.get('/api/kernelspecs', async (req: Router.IRequest) => {
-      const { specs } = kernelspecs;
-      if (!specs) {
-        return new Response(null);
-      }
-      // follow the same format as in Jupyter Server
-      const allKernelSpecs: {
-        [name: string]: {
-          name: string;
-          spec: KernelSpec.ISpecModel | undefined;
-          resources: { [name: string]: string } | undefined;
-        };
-      } = {};
-      const allSpecs = specs.kernelspecs;
-      Object.keys(allSpecs).forEach((name) => {
-        const spec = allSpecs[name];
-        const { resources } = spec ?? {};
-        allKernelSpecs[name] = {
-          name,
-          spec,
-          resources,
-        };
-      });
-      const res = {
-        default: specs.default,
-        kernelspecs: allKernelSpecs,
-      };
-      return new Response(JSON.stringify(res));
-    });
   },
 };
 
@@ -240,8 +186,6 @@ const plugins: JupyterLiteServerPlugin<any>[] = [
   configSectionRoutesPlugin,
   kernelsPlugin,
   kernelsRoutesPlugin,
-  kernelSpecPlugin,
-  kernelSpecRoutesPlugin,
   licensesPlugin,
   licensesRoutesPlugin,
   lspRoutesPlugin,

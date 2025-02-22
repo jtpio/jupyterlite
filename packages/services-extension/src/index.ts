@@ -20,7 +20,7 @@ import {
 
 import { Contents as JupyterLiteContents } from '@jupyterlite/contents';
 
-import { KernelSpecs } from '@jupyterlite/kernel';
+import { IKernelSpecs, KernelSpecs, LiteKernelSpecs } from '@jupyterlite/kernel';
 
 import { ILocalForage, ensureMemoryStorage } from '@jupyterlite/localforage';
 
@@ -65,7 +65,7 @@ const localforageMemoryPlugin: ServiceManagerPlugin<void> = {
  * The contents manager plugin.
  */
 const contentsManagerPlugin: ServiceManagerPlugin<Contents.IManager> = {
-  id: '@jupyterlab/services-extension:contents-manager',
+  id: '@jupyterlite/services-extension:contents-manager',
   description: 'The default contents manager plugin.',
   autoStart: true,
   provides: IContentsManager,
@@ -96,16 +96,31 @@ const contentsManagerPlugin: ServiceManagerPlugin<Contents.IManager> = {
  * The kernel spec manager plugin.
  */
 const kernelSpecManagerPlugin: ServiceManagerPlugin<KernelSpec.IManager> = {
-  id: '@jupyterlab/services-extension:kernel-spec-manager',
+  id: '@jupyterlite/services-extension:kernel-spec-manager',
   description: 'The kernel spec manager plugin.',
   autoStart: true,
   provides: IKernelSpecManager,
+  requires: [IKernelSpecs],
   optional: [IServerSettings],
   activate: (
     _: null,
+    kernelSpecs: IKernelSpecs,
     serverSettings: ServerConnection.ISettings | undefined,
   ): KernelSpec.IManager => {
-    return new KernelSpecs({ serverSettings });
+    return new LiteKernelSpecs({ kernelSpecs, serverSettings });
+  },
+};
+
+/**
+ * The in-browser kernel spec manager plugin.
+ */
+const liteKernelSpecManagerPlugin: ServiceManagerPlugin<IKernelSpecs> = {
+  id: '@jupyterlite/services-extension:kernel-specs',
+  description: 'The in-browser kernel spec manager plugin.',
+  autoStart: true,
+  provides: IKernelSpecs,
+  activate: (_: null): IKernelSpecs => {
+    return new KernelSpecs();
   },
 };
 
@@ -113,7 +128,7 @@ const kernelSpecManagerPlugin: ServiceManagerPlugin<KernelSpec.IManager> = {
  * The nbconvert manager plugin.
  */
 const nbConvertManagerPlugin: ServiceManagerPlugin<NbConvert.IManager> = {
-  id: '@jupyterlab/services-extension:nbconvert-manager',
+  id: '@jupyterlite/services-extension:nbconvert-manager',
   description: 'The nbconvert manager plugin.',
   autoStart: true,
   provides: INbConvertManager,
@@ -131,7 +146,7 @@ const nbConvertManagerPlugin: ServiceManagerPlugin<NbConvert.IManager> = {
  * The default server settings plugin.
  */
 const serverSettingsPlugin: ServiceManagerPlugin<ServerConnection.ISettings> = {
-  id: '@jupyterlab/services-extension:server-settings',
+  id: '@jupyterlite/services-extension:server-settings',
   description: 'The default server settings plugin.',
   autoStart: true,
   provides: IServerSettings,
@@ -178,6 +193,7 @@ const settingsPlugin: ServiceManagerPlugin<Setting.IManager> = {
 export default [
   contentsManagerPlugin,
   kernelSpecManagerPlugin,
+  liteKernelSpecManagerPlugin,
   localforagePlugin,
   localforageMemoryPlugin,
   nbConvertManagerPlugin,
