@@ -641,6 +641,7 @@ const translator: JupyterFrontEndPlugin<ITranslator> = {
       .composite as boolean;
     stringsPrefix = displayStringsPrefix ? stringsPrefix : '';
     const serverSettings = app.serviceManager.serverSettings;
+    // TODO: use @jupyterlite/translation
     const translationManager = new TranslationManager(
       paths.urls.translations,
       stringsPrefix,

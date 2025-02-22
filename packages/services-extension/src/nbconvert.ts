@@ -6,7 +6,10 @@ import { NbConvertManager } from '@jupyterlab/services';
 /**
  * Custom nbconvert manager for JupyterLite
  */
-export class JupyterLiteNbConvertManager extends NbConvertManager {
+export class LocalNbConvertManager extends NbConvertManager {
+  /**
+   * Override the default export formats.
+   */
   async getExportFormats(force?: boolean): Promise<NbConvertManager.IExportFormats> {
     return {};
   }

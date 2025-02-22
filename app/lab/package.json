@@ -321,6 +321,7 @@
       "@jupyterlab/filebrowser-extension:share-file",
       "@jupyterlab/help-extension:about",
       "@jupyterlab/services-extension:connection-status",
+      "@jupyterlab/services-extension:event-manager",
       "@jupyterlab/services-extension:server-settings",
       "@jupyterlab/services-extension:setting-manager",
       "@jupyterlab/translation:translator",

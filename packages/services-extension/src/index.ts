@@ -5,8 +5,10 @@ import { PageConfig } from '@jupyterlab/coreutils';
 
 import {
   Contents,
+  Event,
   IContentsManager,
   IDefaultDrive,
+  IEventManager,
   IKernelSpecManager,
   INbConvertManager,
   IServerSettings,
@@ -30,7 +32,9 @@ import localforage from 'localforage';
 
 import { WebSocket } from 'mock-socket';
 
-import { JupyterLiteNbConvertManager } from './nbconvert';
+import { LocalEventManager } from './event';
+
+import { LocalNbConvertManager } from './nbconvert';
 
 /**
  * The localforage plugin
@@ -93,6 +97,23 @@ const contentsManagerPlugin: ServiceManagerPlugin<Contents.IManager> = {
 };
 
 /**
+ * The event manager plugin.
+ */
+const eventManagerPlugin: ServiceManagerPlugin<Event.IManager> = {
+  id: '@jupyterlab/services-extension:event-manager',
+  description: 'The event manager plugin.',
+  autoStart: true,
+  provides: IEventManager,
+  optional: [IServerSettings],
+  activate: (
+    _: null,
+    serverSettings: ServerConnection.ISettings | undefined,
+  ): Event.IManager => {
+    return new LocalEventManager({ serverSettings });
+  },
+};
+
+/**
  * The kernel spec manager plugin.
  */
 const kernelSpecManagerPlugin: ServiceManagerPlugin<KernelSpec.IManager> = {
@@ -137,7 +158,7 @@ const nbConvertManagerPlugin: ServiceManagerPlugin<NbConvert.IManager> = {
     _: null,
     serverSettings: ServerConnection.ISettings | undefined,
   ): NbConvert.IManager => {
-    const nbConvertManager = new JupyterLiteNbConvertManager({ serverSettings });
+    const nbConvertManager = new LocalNbConvertManager({ serverSettings });
     return nbConvertManager;
   },
 };
@@ -192,6 +213,7 @@ const settingsPlugin: ServiceManagerPlugin<Setting.IManager> = {
 
 export default [
   contentsManagerPlugin,
+  eventManagerPlugin,
   kernelSpecManagerPlugin,
   liteKernelSpecManagerPlugin,
   localforagePlugin,
