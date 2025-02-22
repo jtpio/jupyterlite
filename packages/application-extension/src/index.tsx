@@ -26,7 +26,12 @@ import { IMainMenu } from '@jupyterlab/mainmenu';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
-import { ITranslator, TranslationManager } from '@jupyterlab/translation';
+import { ITranslator, ITranslatorConnector } from '@jupyterlab/translation';
+
+import {
+  LiteTranslationManager,
+  LiteTranslatorConnector,
+} from '@jupyterlite/translation';
 
 import {
   BroadcastChannelWrapper,
@@ -615,9 +620,22 @@ const shareFile: JupyterFrontEndPlugin<void> = {
 };
 
 /**
+ * The main translator connector plugin.
+ */
+const translatorConnector: JupyterFrontEndPlugin<ITranslatorConnector> = {
+  id: '@jupyterlite/application-extension:translator-connector',
+  description: 'Provides the application translation connector.',
+  autoStart: true,
+  provides: ITranslatorConnector,
+  activate: (app: JupyterFrontEnd) => {
+    return new LiteTranslatorConnector();
+  },
+};
+
+/**
  * The main translator plugin.
  *
- * TODO: only replace the connector when the upstream PR is merged and released:
+ * TODO: remove when the upstream PR is merged and released:
  * https://github.com/jupyterlab/jupyterlab/pull/17325
  */
 const translator: JupyterFrontEndPlugin<ITranslator> = {
@@ -625,13 +643,14 @@ const translator: JupyterFrontEndPlugin<ITranslator> = {
   description: 'Provides the application translation object.',
   autoStart: true,
   requires: [JupyterFrontEnd.IPaths, ISettingRegistry],
-  optional: [ILabShell],
+  optional: [ILabShell, ITranslatorConnector],
   provides: ITranslator,
   activate: async (
     app: JupyterFrontEnd,
     paths: JupyterFrontEnd.IPaths,
     settings: ISettingRegistry,
     labShell: ILabShell | null,
+    connector: ITranslatorConnector | null,
   ) => {
     const pluginId = '@jupyterlab/translation-extension:plugin';
     const setting = await settings.load(pluginId);
@@ -641,11 +660,11 @@ const translator: JupyterFrontEndPlugin<ITranslator> = {
       .composite as boolean;
     stringsPrefix = displayStringsPrefix ? stringsPrefix : '';
     const serverSettings = app.serviceManager.serverSettings;
-    // TODO: use @jupyterlite/translation
-    const translationManager = new TranslationManager(
+    const translationManager = new LiteTranslationManager(
       paths.urls.translations,
       stringsPrefix,
       serverSettings,
+      connector ?? undefined,
     );
     await translationManager.fetch(currentLocale);
 
@@ -670,6 +689,7 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   serviceWorkerPlugin,
   sessionContextPatch,
   shareFile,
+  translatorConnector,
   translator,
 ];
 
