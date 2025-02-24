@@ -4280,7 +4280,6 @@ __metadata:
     "@jupyterlite/licenses": ^0.6.0-alpha.2
     "@jupyterlite/localforage": ^0.6.0-alpha.2
     "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/server-extension": ^0.6.0-alpha.2
     "@jupyterlite/types": ^0.6.0-alpha.2
     "@jupyterlite/ui-components": ^0.6.0-alpha.2
     es6-promise: ~4.2.8
@@ -4347,7 +4346,6 @@ __metadata:
     "@jupyterlite/licenses": ^0.6.0-alpha.2
     "@jupyterlite/localforage": ^0.6.0-alpha.2
     "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/server-extension": ^0.6.0-alpha.2
     "@jupyterlite/types": ^0.6.0-alpha.2
     "@jupyterlite/ui-components": ^0.6.0-alpha.2
     es6-promise: ~4.2.8
@@ -4413,7 +4411,6 @@ __metadata:
     "@jupyterlite/localforage": ^0.6.0-alpha.2
     "@jupyterlite/notebook-application-extension": ^0.6.0-alpha.2
     "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/server-extension": ^0.6.0-alpha.2
     "@jupyterlite/services-extension": ^0.6.0-alpha.2
     "@jupyterlite/types": ^0.6.0-alpha.2
     "@jupyterlite/ui-components": ^0.6.0-alpha.2
@@ -4484,7 +4481,6 @@ __metadata:
     "@jupyterlite/localforage": ^0.6.0-alpha.2
     "@jupyterlite/notebook-application-extension": ^0.6.0-alpha.2
     "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/server-extension": ^0.6.0-alpha.2
     "@jupyterlite/types": ^0.6.0-alpha.2
     "@jupyterlite/ui-components": ^0.6.0-alpha.2
     es6-promise: ~4.2.8
@@ -4526,7 +4522,6 @@ __metadata:
     "@jupyterlite/iframe-extension": ^0.6.0-alpha.2
     "@jupyterlite/repl-extension": ^0.6.0-alpha.2
     "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/server-extension": ^0.6.0-alpha.2
     "@jupyterlite/types": ^0.6.0-alpha.2
     "@jupyterlite/ui-components": ^0.6.0-alpha.2
     es6-promise: ~4.2.8
@@ -4581,7 +4576,6 @@ __metadata:
     "@jupyterlite/localforage": ^0.6.0-alpha.2
     "@jupyterlite/notebook-application-extension": ^0.6.0-alpha.2
     "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/server-extension": ^0.6.0-alpha.2
     "@jupyterlite/types": ^0.6.0-alpha.2
     "@jupyterlite/ui-components": ^0.6.0-alpha.2
     es6-promise: ~4.2.8
@@ -4831,28 +4825,6 @@ __metadata:
     svgo: ^3.0.1
     typedoc: ~0.23.21
     typedoc-plugin-markdown: ~3.14.0
-    typescript: ~5.1.6
-  languageName: unknown
-  linkType: soft
-
-"@jupyterlite/server-extension@^0.6.0-alpha.2, @jupyterlite/server-extension@workspace:packages/server-extension":
-  version: 0.0.0-use.local
-  resolution: "@jupyterlite/server-extension@workspace:packages/server-extension"
-  dependencies:
-    "@babel/core": ^7.11.6
-    "@babel/preset-env": ^7.12.1
-    "@jupyterlab/coreutils": ~6.4.0-beta.0
-    "@jupyterlite/kernel": ^0.6.0-alpha.2
-    "@jupyterlite/licenses": ^0.6.0-alpha.2
-    "@jupyterlite/localforage": ^0.6.0-alpha.2
-    "@jupyterlite/server": ^0.6.0-alpha.2
-    "@jupyterlite/session": ^0.6.0-alpha.2
-    "@jupyterlite/settings": ^0.6.0-alpha.2
-    "@jupyterlite/translation": ^0.6.0-alpha.2
-    "@types/jest": ^29.5.3
-    jest: ^29.6.2
-    rimraf: ~5.0.1
-    ts-jest: ^29.1.1
     typescript: ~5.1.6
   languageName: unknown
   linkType: soft

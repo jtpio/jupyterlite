@@ -201,8 +201,12 @@ const serverSettingsPlugin: ServiceManagerPlugin<ServerConnection.ISettings> = {
     return {
       ...ServerConnection.makeSettings(),
       WebSocket,
-      fetch: () => {
-        throw new Error('TODO fetch');
+      fetch: async (
+        req: RequestInfo,
+        init?: RequestInit | null | undefined,
+      ): Promise<Response> => {
+        console.warn(`Unhandled fetch request: ${req.toString()}`);
+        return new Response(JSON.stringify({}));
       },
     };
   },

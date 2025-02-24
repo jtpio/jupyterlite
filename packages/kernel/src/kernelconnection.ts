@@ -2,6 +2,8 @@ import { Kernel, KernelConnection, KernelSpec } from '@jupyterlab/services';
 
 /**
  * Custom KernelConnection class for use in JupyterLite.
+ *
+ * TODO: consider implementing a proper Kernel.IKernelConnection instead of extending KernelConnection
  */
 export class LiteKernelConnection
   extends KernelConnection
