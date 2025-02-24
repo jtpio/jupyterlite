@@ -1,7 +1,5 @@
 import { BaseManager, Kernel, Session } from '@jupyterlab/services';
 
-import { SessionConnection } from '@jupyterlab/services/lib/session/default';
-
 import { PathExt } from '@jupyterlab/coreutils';
 
 import { ArrayExt } from '@lumino/algorithm';
@@ -10,6 +8,7 @@ import { UUID } from '@lumino/coreutils';
 
 import { ISignal, Signal } from '@lumino/signaling';
 import { LiteKernelManager } from '@jupyterlite/kernel';
+import { LiteSessionConnection } from './sessionconnection';
 
 /**
  * A class to handle requests to /api/sessions
@@ -109,7 +108,7 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
       'connectToKernel' | 'serverSettings'
     >,
   ): Session.ISessionConnection {
-    const sessionConnection = new SessionConnection({
+    const sessionConnection = new LiteSessionConnection({
       ...options,
       connectToKernel: this._connectToKernel,
       serverSettings: this.serverSettings,
