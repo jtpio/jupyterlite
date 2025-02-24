@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 export * from './kernel';
-export * from './kernels';
+export * from './kernelmanager';
 export * from './kernelspecs';
-export * from './kernelspecs-manager';
+export * from './kernelspecsmanager';
 export * from './tokens';

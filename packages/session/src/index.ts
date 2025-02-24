@@ -2,4 +2,4 @@
 // Distributed under the terms of the Modified BSD License.
 
 export * from './tokens';
-export * from './sessions';
+export * from './sessionmanager';
