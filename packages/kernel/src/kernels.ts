@@ -109,7 +109,7 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
     let handleComms = options.handleComms ?? true;
     // By default, handle comms only if no other kernel connection is.
     if (options.handleComms === undefined) {
-      for (const kc of this._kernelConnections) {
+      for (const kc of this._kernelConnections.values()) {
         if (kc.id === id && kc.handleComms) {
           handleComms = false;
           break;
@@ -121,14 +121,15 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
       ...options,
       serverSettings: this.serverSettings,
     });
-    this._onStarted(kernelConnection);
-    if (!this._models.has(id)) {
-      // We trust the user to connect to an existing kernel, but we verify
-      // asynchronously.
-      void this.refreshRunning().catch(() => {
-        /* no-op */
-      });
-    }
+    // TODO?
+    // this._onStarted(kernelConnection);
+    // if (!this._models.has(id)) {
+    //   // We trust the user to connect to an existing kernel, but we verify
+    //   // asynchronously.
+    //   void this.refreshRunning().catch(() => {
+    //     /* no-op */
+    //   });
+    // }
     return kernelConnection;
   }
 
@@ -260,12 +261,9 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
       encodeURIComponent(kernelId),
       'channels',
     );
-    const runningKernel = this._kernels.get(kernelId);
+    const runningKernel = this._kernelConnections.get(kernelId);
     if (runningKernel) {
-      return {
-        id: runningKernel.id,
-        name: runningKernel.name,
-      };
+      return runningKernel;
     }
 
     // start the kernel
@@ -292,8 +290,9 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
     const kernel = await factory({
       id: kernelId,
       sendMessage,
-      name,
-      location,
+      // TODO: fix?
+      name: name!,
+      location: location ?? '',
     });
 
     this._kernels.set(kernelId, kernel);
@@ -304,6 +303,7 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
       mock: false,
       selectProtocol: () => KERNEL_WEBSOCKET_PROTOCOL,
     });
+
     wsServer.on('connection', (socket: WebSocketClient): void => {
       const url = new URL(socket.url);
       const clientId = url.searchParams.get('session_id') ?? '';
@@ -328,10 +328,14 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
       this._kernelClients.delete(kernelId);
     });
 
-    return {
-      id: kernel.id,
-      name: kernel.name,
-    };
+    const kernelConnection = this.connectTo({
+      model: {
+        id: kernel.id,
+        name: kernel.name,
+      },
+    });
+    this._kernelConnections.set(kernel.id, kernelConnection);
+    return kernelConnection;
   }
 
   /**
@@ -383,7 +387,8 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
   private _isReady = false;
   private _connectionFailure = new Signal<this, Error>(this);
   private _ready: Promise<void> = Promise.resolve(void 0);
-  private _kernelConnections = new Set<Kernel.IKernelConnection>();
+  // store as a Map to be able to reuse an existing connection
+  private _kernelConnections = new Map<string, Kernel.IKernelConnection>();
 }
 
 /**

@@ -9,6 +9,7 @@ import { ArrayExt } from '@lumino/algorithm';
 import { UUID } from '@lumino/coreutils';
 
 import { ISignal, Signal } from '@lumino/signaling';
+import { LiteKernelManager } from '@jupyterlite/kernel';
 
 /**
  * A class to handle requests to /api/sessions
@@ -23,40 +24,41 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
     super(options);
     this._kernelManager = options.kernelManager;
     // Listen for kernel removals
-    this._kernels.changed.connect((_, args) => {
-      switch (args.type) {
-        case 'remove': {
-          const kernelId = args.oldValue?.id;
-          if (!kernelId) {
-            return;
-          }
-          // find the session associated with the kernel
-          const session = this._sessions.find((s) => s.kernel?.id === kernelId);
-          if (!session) {
-            return;
-          }
-          // Track the kernel ID for restart detection
-          this._pendingRestarts.add(kernelId);
-          setTimeout(async () => {
-            // If after a short delay the kernel hasn't been re-added, it was terminated
-            if (this._pendingRestarts.has(kernelId)) {
-              this._pendingRestarts.delete(kernelId);
-              await this.shutdown(session.id);
-            }
-          }, 100);
-          break;
-        }
-        case 'add': {
-          // If this was a restart, remove it from pending
-          const kernelId = args.newValue?.id;
-          if (!kernelId) {
-            return;
-          }
-          this._pendingRestarts.delete(kernelId);
-          break;
-        }
-      }
-    });
+    // TODO: re-add kernel restart logic
+    // this._kernels.changed.connect((_, args) => {
+    //   switch (args.type) {
+    //     case 'remove': {
+    //       const kernelId = args.oldValue?.id;
+    //       if (!kernelId) {
+    //         return;
+    //       }
+    //       // find the session associated with the kernel
+    //       const session = this._sessions.find((s) => s.kernel?.id === kernelId);
+    //       if (!session) {
+    //         return;
+    //       }
+    //       // Track the kernel ID for restart detection
+    //       this._pendingRestarts.add(kernelId);
+    //       setTimeout(async () => {
+    //         // If after a short delay the kernel hasn't been re-added, it was terminated
+    //         if (this._pendingRestarts.has(kernelId)) {
+    //           this._pendingRestarts.delete(kernelId);
+    //           await this.shutdown(session.id);
+    //         }
+    //       }, 100);
+    //       break;
+    //     }
+    //     case 'add': {
+    //       // If this was a restart, remove it from pending
+    //       const kernelId = args.newValue?.id;
+    //       if (!kernelId) {
+    //         return;
+    //       }
+    //       this._pendingRestarts.delete(kernelId);
+    //       break;
+    //     }
+    //   }
+    // });
   }
 
   /**
@@ -144,21 +146,28 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
    *
    * @param options The options to start a new session.
    */
-  async startNew(options: Session.IModel): Promise<Session.IModel> {
-    const { path, name } = options;
-    const running = this._sessions.find((s) => s.name === name);
+  async startNew(
+    createOptions: Session.ISessionOptions,
+    connectOptions: Omit<
+      Session.ISessionConnection.IOptions,
+      'model' | 'connectToKernel' | 'serverSettings'
+    > = {},
+  ): Promise<Session.ISessionConnection> {
+    const { path, name } = createOptions;
+    const running = this._sessionConnections.get(path);
     if (running) {
       return running;
     }
-    const kernelName = options.kernel?.name ?? '';
-    const id = options.id ?? UUID.uuid4();
-    const nameOrPath = options.name ?? options.path;
-    const dirname = PathExt.dirname(options.name) || PathExt.dirname(options.path);
+    const kernelName = createOptions.kernel?.name ?? '';
+    const id = UUID.uuid4();
+    const nameOrPath = createOptions.name ?? createOptions.path;
+    const dirname =
+      PathExt.dirname(createOptions.name) || PathExt.dirname(createOptions.path);
     const hasDrive = nameOrPath.includes(':');
     const driveName = hasDrive ? nameOrPath.split(':')[0] : '';
     // add drive name if missing (top level directory)
     const location = dirname.includes(driveName) ? dirname : `${driveName}:${dirname}`;
-    const kernel = await this._kernels.startNew({
+    const kernel = await this._kernelManager.startNew({
       id,
       name: kernelName,
       location,
@@ -178,7 +187,10 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
     // clean up the session on kernel shutdown
     void this._handleKernelShutdown({ kernelId: id, sessionId: session.id });
 
-    return session;
+    return this.connectTo({
+      ...connectOptions,
+      model: session,
+    });
   }
 
   /**
@@ -193,7 +205,7 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
     }
     const kernelId = session.kernel?.id;
     if (kernelId) {
-      await this._kernels.shutdown(kernelId);
+      await this._kernelManager.shutdown(kernelId);
     }
     ArrayExt.removeFirstOf(this._sessions, session);
   }
@@ -284,7 +296,7 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
           patched.kernel = session.kernel;
         }
       } else if (kernel.name) {
-        const newKernel = await this._kernels.startNew({
+        const newKernel = await this._kernelManager.startNew({
           id: UUID.uuid4(),
           name: kernel.name,
           location: PathExt.dirname(patched.path),
@@ -319,9 +331,9 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
     // No need to handle kernel shutdown here anymore since we're using the changed signal
   }
 
-  private _kernels: IKernels;
   private _sessions: Session.IModel[] = [];
-  private _pendingRestarts = new Set<string>();
+  private _sessionConnections = new Map<string, Session.ISessionConnection>();
+  private _models = new Map<string, Session.IModel>();
   private _isReady = false;
   private _connectionFailure = new Signal<this, Error>(this);
   private _ready: Promise<void> = Promise.resolve(void 0);
@@ -331,7 +343,8 @@ export class LiteSessionManager extends BaseManager implements Session.IManager 
   ) => {
     return this._kernelManager.connectTo(options);
   };
-  private _kernelManager: Kernel.IManager;
+  private _kernelManager: LiteKernelManager;
+  // private _pendingRestarts = new Set<string>();
 }
 
 /**
@@ -344,7 +357,9 @@ export namespace LiteSessionManager {
   export interface IOptions extends BaseManager.IOptions {
     /**
      * Kernel Manager
+     *
+     * TODO: revert back to Kernel.IManager?
      */
-    kernelManager: Kernel.IManager;
+    kernelManager: LiteKernelManager;
   }
 }

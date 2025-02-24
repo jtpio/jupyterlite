@@ -13,12 +13,14 @@ import {
   IKernelSpecManager,
   INbConvertManager,
   IServerSettings,
+  ISessionManager,
   ISettingManager,
   Kernel,
   KernelSpec,
   NbConvert,
   ServerConnection,
   ServiceManagerPlugin,
+  Session,
   Setting,
 } from '@jupyterlab/services';
 
@@ -42,6 +44,7 @@ import { WebSocket } from 'mock-socket';
 import { LocalEventManager } from './event';
 
 import { LocalNbConvertManager } from './nbconvert';
+import { LiteSessionManager } from '@jupyterlite/session';
 
 /**
  * The localforage plugin
@@ -205,10 +208,34 @@ const serverSettingsPlugin: ServiceManagerPlugin<ServerConnection.ISettings> = {
         req: RequestInfo,
         init?: RequestInit | null | undefined,
       ): Promise<Response> => {
-        console.warn(`Unhandled fetch request: ${req.toString()}`);
+        const request = new Request(req, init ?? undefined);
+        const url = new URL(request.url);
+        console.error(`Unhandled fetch request path: ${url.pathname}`);
         return new Response(JSON.stringify({}));
       },
     };
+  },
+};
+
+/**
+ * The session manager plugin.
+ */
+const sessionManagerPlugin: ServiceManagerPlugin<Session.IManager> = {
+  id: '@jupyterlite/services-extension:session-manager',
+  description: 'The session manager plugin.',
+  autoStart: true,
+  provides: ISessionManager,
+  requires: [IKernelManager],
+  optional: [IServerSettings],
+  activate: (
+    _: null,
+    kernelManager: LiteKernelManager,
+    serverSettings: ServerConnection.ISettings | undefined,
+  ): Session.IManager => {
+    return new LiteSessionManager({
+      kernelManager,
+      serverSettings,
+    });
   },
 };
 
@@ -251,5 +278,6 @@ export default [
   localforageMemoryPlugin,
   nbConvertManagerPlugin,
   serverSettingsPlugin,
+  sessionManagerPlugin,
   settingsPlugin,
 ];
