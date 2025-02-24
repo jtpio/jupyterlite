@@ -2,7 +2,7 @@ import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
 import { IObservableMap, ObservableMap } from '@jupyterlab/observables';
 
-import { KernelAPI, Kernel, KernelMessage, BaseManager } from '@jupyterlab/services';
+import { BaseManager, Kernel, KernelAPI, KernelMessage } from '@jupyterlab/services';
 
 import { deserialize, serialize } from '@jupyterlab/services/lib/kernel/serialize';
 
@@ -14,8 +14,9 @@ import { ISignal, Signal } from '@lumino/signaling';
 
 import { Mutex } from 'async-mutex';
 
-import { Server as WebSocketServer, Client as WebSocketClient } from 'mock-socket';
+import { Client as WebSocketClient, Server as WebSocketServer } from 'mock-socket';
 
+import { LiteKernelConnection } from './kernelconnection';
 import { IKernel, IKernelSpecs } from './tokens';
 
 /**
@@ -33,10 +34,10 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
    *
    * @param options The instantiation options
    */
-  constructor(options: Kernels.IOptions) {
+  constructor(options: LiteKernelManager.IOptions) {
     super(options);
-    const { kernelspecs } = options;
-    this._kernelspecs = kernelspecs;
+    const { kernelSpecs } = options;
+    this._kernelspecs = kernelSpecs;
     // Forward the changed signal from _kernels
     this._kernels.changed.connect((_, args) => {
       this._changed.emit(args);
@@ -86,6 +87,52 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
   }
 
   /**
+   * Dispose of the resources used by the manager.
+   */
+  dispose(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    // this._models.clear();
+    // this._kernelConnections.forEach(x => x.dispose());
+    super.dispose();
+  }
+
+  /**
+   * Connect to an existing kernel.
+   */
+  connectTo(
+    options: Omit<Kernel.IKernelConnection.IOptions, 'serverSettings'>,
+  ): Kernel.IKernelConnection {
+    const { id } = options.model;
+
+    let handleComms = options.handleComms ?? true;
+    // By default, handle comms only if no other kernel connection is.
+    if (options.handleComms === undefined) {
+      for (const kc of this._kernelConnections) {
+        if (kc.id === id && kc.handleComms) {
+          handleComms = false;
+          break;
+        }
+      }
+    }
+    const kernelConnection = new LiteKernelConnection({
+      handleComms,
+      ...options,
+      serverSettings: this.serverSettings,
+    });
+    this._onStarted(kernelConnection);
+    if (!this._models.has(id)) {
+      // We trust the user to connect to an existing kernel, but we verify
+      // asynchronously.
+      void this.refreshRunning().catch(() => {
+        /* no-op */
+      });
+    }
+    return kernelConnection;
+  }
+
+  /**
    * Create an iterator over the most recent running kernels.
    *
    * @returns A new iterator over the running kernels.
@@ -129,14 +176,18 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
    * Start a new kernel.
    *
    * @param options The kernel start options.
+   * For in-browser kernels, specify the drive location and the kernel id.
    */
-  async startNew(options: Kernels.IKernelOptions): Promise<Kernel.IModel> {
-    const { id, name, location } = options;
+  async startNew(
+    createOptions: LiteKernelManager.ICreateOptions = {},
+  ): Promise<Kernel.IKernelConnection> {
+    const { id, name, location } = createOptions;
 
-    const factory = this._kernelspecs.factories.get(name);
+    const kernelName = name ?? this._kernelspecs.defaultKernelName;
+    const factory = this._kernelspecs.factories.get(kernelName);
     // bail if there is no factory associated with the requested kernel
     if (!factory) {
-      return { id, name };
+      throw Error(`Could not start kernel ${kernelName}`);
     }
 
     // create a synchronization mechanism to allow only one message
@@ -204,7 +255,7 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
 
     // There is one server per kernel which handles multiple clients
     const kernelUrl = URLExt.join(
-      Kernels.WS_BASE_URL,
+      LiteKernelManager.WS_BASE_URL,
       KernelAPI.KERNEL_SERVICE_URL,
       encodeURIComponent(kernelId),
       'channels',
@@ -332,12 +383,13 @@ export class LiteKernelManager extends BaseManager implements Kernel.IManager {
   private _isReady = false;
   private _connectionFailure = new Signal<this, Error>(this);
   private _ready: Promise<void> = Promise.resolve(void 0);
+  private _kernelConnections = new Set<Kernel.IKernelConnection>();
 }
 
 /**
  * A namespace for Kernels statics.
  */
-export namespace Kernels {
+export namespace LiteKernelManager {
   /**
    * The options used to initialize a KernelManager.
    */
@@ -345,27 +397,27 @@ export namespace Kernels {
     /**
      * The in-browser kernel specs service.
      */
-    kernelspecs: IKernelSpecs;
+    kernelSpecs: IKernelSpecs;
   }
 
   /**
-   * Options to start a new kernel.
+   * The options to start a new kernel.
    */
-  export interface IKernelOptions {
+  export interface ICreateOptions {
     /**
      * The kernel id.
      */
-    id: string;
+    id?: string;
 
     /**
      * The kernel name.
      */
-    name: string;
+    name?: string;
 
     /**
      * The location in the virtual filesystem from which the kernel was started.
      */
-    location: string;
+    location?: string;
   }
 
   /**

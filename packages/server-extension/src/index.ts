@@ -11,7 +11,7 @@ import {
   Router,
 } from '@jupyterlite/server';
 
-import { ISessions, Sessions } from '@jupyterlite/session';
+import { ISessions, LiteSessionManager } from '@jupyterlite/session';
 
 /**
  * A plugin providing the routes for the config section.
