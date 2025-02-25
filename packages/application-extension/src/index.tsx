@@ -391,15 +391,14 @@ const lspConnectionManager: JupyterFrontEndPlugin<ILSPDocumentConnectionManager>
   requires: [IWidgetLSPAdapterTracker],
   provides: ILSPDocumentConnectionManager,
   activate: (app: JupyterFrontEnd, tracker: IWidgetLSPAdapterTracker) => {
-    class LiteLanguageServerManager extends LanguageServerManager {
+    const languageServerManager = new (class extends LanguageServerManager {
       async fetchSessions(): Promise<void> {
         // no-op
       }
-    }
-
-    const languageServerManager = new LiteLanguageServerManager({
+    })({
       settings: app.serviceManager.serverSettings,
     });
+
     const connectionManager = new DocumentConnectionManager({
       languageServerManager,
       adapterTracker: tracker,

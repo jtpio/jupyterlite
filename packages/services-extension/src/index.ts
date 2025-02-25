@@ -15,13 +15,17 @@ import {
   IServerSettings,
   ISessionManager,
   ISettingManager,
+  IUserManager,
   Kernel,
   KernelSpec,
   NbConvert,
+  NbConvertManager,
   ServerConnection,
   ServiceManagerPlugin,
   Session,
   Setting,
+  User,
+  UserManager,
 } from '@jupyterlab/services';
 
 import { Contents as JupyterLiteContents } from '@jupyterlite/contents';
@@ -43,7 +47,6 @@ import { WebSocket } from 'mock-socket';
 
 import { LocalEventManager } from './event';
 
-import { LocalNbConvertManager } from './nbconvert';
 import { LiteSessionManager } from '@jupyterlite/session';
 
 /**
@@ -187,7 +190,14 @@ const nbConvertManagerPlugin: ServiceManagerPlugin<NbConvert.IManager> = {
     _: null,
     serverSettings: ServerConnection.ISettings | undefined,
   ): NbConvert.IManager => {
-    const nbConvertManager = new LocalNbConvertManager({ serverSettings });
+    const nbConvertManager = new (class extends NbConvertManager {
+      async getExportFormats(
+        force?: boolean,
+      ): Promise<NbConvertManager.IExportFormats> {
+        return {};
+      }
+    })({ serverSettings });
+
     return nbConvertManager;
   },
 };
@@ -268,6 +278,27 @@ const settingsPlugin: ServiceManagerPlugin<Setting.IManager> = {
   },
 };
 
+/**
+ * The user manager plugin.
+ */
+const userManagerPlugin: ServiceManagerPlugin<User.IManager> = {
+  id: '@jupyterlite/services-extension:user-manager',
+  description: 'The user manager plugin.',
+  autoStart: true,
+  provides: IUserManager,
+  optional: [IServerSettings],
+  activate: (
+    _: null,
+    serverSettings: ServerConnection.ISettings | undefined,
+  ): User.IManager => {
+    return new (class extends UserManager {
+      async requestUser(): Promise<void> {
+        // no-op
+      }
+    })({ serverSettings });
+  },
+};
+
 export default [
   contentsManagerPlugin,
   eventManagerPlugin,
@@ -280,4 +311,5 @@ export default [
   serverSettingsPlugin,
   sessionManagerPlugin,
   settingsPlugin,
+  userManagerPlugin,
 ];
