@@ -1,8 +1,8 @@
 {
   "jupyter-config-data": {
     "appName": "JupyterLite",
-    "appVersion": "0.6.0-alpha.2",
     "appUrl": "./lab",
+    "appVersion": "0.6.0-alpha.2",
     "baseUrl": "./",
     "defaultKernelName": "python",
     "faviconUrl": "./lab/favicon.ico",
@@ -13,6 +13,12 @@
         "load": "static/remoteEntry.8706c463a056a3aa7c83.js",
         "name": "@jupyter-notebook/lab-extension",
         "style": "./style"
+      },
+      {
+        "extension": "./extension",
+        "liteExtension": true,
+        "load": "static/remoteEntry.bcb6e0c823f3bdb2c1ce.js",
+        "name": "@jupyterlite/javascript-kernel-extension"
       },
       {
         "extension": "./extension",
@@ -30,159 +36,274 @@
     ],
     "fileTypes": {
       "css": {
-        "extensions": [".css"],
+        "extensions": [
+          ".css"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/css"],
+        "mimeTypes": [
+          "text/css"
+        ],
         "name": "css"
       },
       "csv": {
-        "extensions": [".csv"],
+        "extensions": [
+          ".csv"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/csv"],
+        "mimeTypes": [
+          "text/csv"
+        ],
         "name": "csv"
       },
       "fasta": {
-        "extensions": [".fasta"],
+        "extensions": [
+          ".fasta"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/plain"],
+        "mimeTypes": [
+          "text/plain"
+        ],
         "name": "fasta"
       },
       "geojson": {
-        "extensions": [".geojson"],
+        "extensions": [
+          ".geojson"
+        ],
         "fileFormat": "json",
-        "mimeTypes": ["application/geo+json"],
+        "mimeTypes": [
+          "application/geo+json"
+        ],
         "name": "geojson"
       },
       "gzip": {
-        "extensions": [".tgz", ".gz", ".gzip"],
+        "extensions": [
+          ".tgz",
+          ".gz",
+          ".gzip"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["application/gzip"],
+        "mimeTypes": [
+          "application/gzip"
+        ],
         "name": "gzip"
       },
       "html": {
-        "extensions": [".html"],
+        "extensions": [
+          ".html"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/html"],
+        "mimeTypes": [
+          "text/html"
+        ],
         "name": "html"
       },
       "ical": {
-        "extensions": [".ical", ".ics", ".ifb", ".icalendar"],
+        "extensions": [
+          ".ical",
+          ".ics",
+          ".ifb",
+          ".icalendar"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/calendar"],
+        "mimeTypes": [
+          "text/calendar"
+        ],
         "name": "ical"
       },
       "ico": {
-        "extensions": [".ico"],
+        "extensions": [
+          ".ico"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["image/x-icon"],
+        "mimeTypes": [
+          "image/x-icon"
+        ],
         "name": "ico"
       },
       "ipynb": {
-        "extensions": [".ipynb"],
+        "extensions": [
+          ".ipynb"
+        ],
         "fileFormat": "json",
-        "mimeTypes": ["application/x-ipynb+json"],
+        "mimeTypes": [
+          "application/x-ipynb+json"
+        ],
         "name": "ipynb"
       },
       "jpeg": {
-        "extensions": [".jpeg", ".jpg"],
+        "extensions": [
+          ".jpeg",
+          ".jpg"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["image/jpeg"],
+        "mimeTypes": [
+          "image/jpeg"
+        ],
         "name": "jpeg"
       },
       "js": {
-        "extensions": [".js", ".mjs"],
+        "extensions": [
+          ".js",
+          ".mjs"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["application/javascript"],
+        "mimeTypes": [
+          "application/javascript"
+        ],
         "name": "js"
       },
       "jsmap": {
-        "extensions": [".map"],
+        "extensions": [
+          ".map"
+        ],
         "fileFormat": "json",
-        "mimeTypes": ["application/json"],
+        "mimeTypes": [
+          "application/json"
+        ],
         "name": "jsmap"
       },
       "json": {
-        "extensions": [".json"],
+        "extensions": [
+          ".json"
+        ],
         "fileFormat": "json",
-        "mimeTypes": ["application/json"],
+        "mimeTypes": [
+          "application/json"
+        ],
         "name": "json"
       },
       "manifest": {
-        "extensions": [".manifest"],
+        "extensions": [
+          ".manifest"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/cache-manifest"],
+        "mimeTypes": [
+          "text/cache-manifest"
+        ],
         "name": "manifest"
       },
       "md": {
-        "extensions": [".md", ".markdown"],
+        "extensions": [
+          ".md",
+          ".markdown"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/markdown"],
+        "mimeTypes": [
+          "text/markdown"
+        ],
         "name": "md"
       },
       "pdf": {
-        "extensions": [".pdf"],
+        "extensions": [
+          ".pdf"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["application/pdf"],
+        "mimeTypes": [
+          "application/pdf"
+        ],
         "name": "pdf"
       },
       "plain": {
-        "extensions": [".txt"],
+        "extensions": [
+          ".txt"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/plain"],
+        "mimeTypes": [
+          "text/plain"
+        ],
         "name": "plain"
       },
       "png": {
-        "extensions": [".png"],
+        "extensions": [
+          ".png"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["image/png"],
+        "mimeTypes": [
+          "image/png"
+        ],
         "name": "png"
       },
       "py": {
-        "extensions": [".py"],
+        "extensions": [
+          ".py"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/x-python", "application/x-python-code"],
+        "mimeTypes": [
+          "text/x-python",
+          "application/x-python-code"
+        ],
         "name": "py"
       },
       "svg": {
-        "extensions": [".svg"],
+        "extensions": [
+          ".svg"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["image/svg+xml"],
+        "mimeTypes": [
+          "image/svg+xml"
+        ],
         "name": "svg"
       },
       "toml": {
-        "extensions": [".toml"],
+        "extensions": [
+          ".toml"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["application/toml"],
+        "mimeTypes": [
+          "application/toml"
+        ],
         "name": "toml"
       },
       "vue": {
-        "extensions": [".vue"],
+        "extensions": [
+          ".vue"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["text/plain"],
+        "mimeTypes": [
+          "text/plain"
+        ],
         "name": "vue"
       },
       "wasm": {
-        "extensions": [".wasm"],
+        "extensions": [
+          ".wasm"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["application/wasm"],
+        "mimeTypes": [
+          "application/wasm"
+        ],
         "name": "wasm"
       },
       "wheel": {
-        "extensions": [".whl"],
+        "extensions": [
+          ".whl"
+        ],
         "fileFormat": "base64",
-        "mimeTypes": ["octet/stream", "application/x-wheel+zip"],
+        "mimeTypes": [
+          "octet/stream",
+          "application/x-wheel+zip"
+        ],
         "name": "wheel"
       },
       "xml": {
-        "extensions": [".xml"],
+        "extensions": [
+          ".xml"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["application/xml"],
+        "mimeTypes": [
+          "application/xml"
+        ],
         "name": "xml"
       },
       "yaml": {
-        "extensions": [".yaml", ".yml"],
+        "extensions": [
+          ".yaml",
+          ".yml"
+        ],
         "fileFormat": "text",
-        "mimeTypes": ["application/x-yaml"],
+        "mimeTypes": [
+          "application/x-yaml"
+        ],
         "name": "yaml"
       }
     },

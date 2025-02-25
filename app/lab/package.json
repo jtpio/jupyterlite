@@ -322,6 +322,7 @@
       "@jupyterlab/help-extension:about",
       "@jupyterlab/lsp-extension:plugin",
       "@jupyterlab/services-extension:connection-status",
+      "@jupyterlab/services-extension:default-drive",
       "@jupyterlab/services-extension:event-manager",
       "@jupyterlab/services-extension:kernel-manager",
       "@jupyterlab/services-extension:kernel-spec-manager",

@@ -6,7 +6,6 @@ import { PageConfig } from '@jupyterlab/coreutils';
 import {
   Contents,
   Event,
-  IContentsManager,
   IDefaultDrive,
   IEventManager,
   IKernelManager,
@@ -28,7 +27,7 @@ import {
   UserManager,
 } from '@jupyterlab/services';
 
-import { Contents as JupyterLiteContents } from '@jupyterlite/contents';
+import { BrowserStorageDrive } from '@jupyterlite/contents';
 
 import {
   IKernelSpecs,
@@ -52,62 +51,26 @@ import { LocalEventManager } from './event';
 import { ISessionStore, LiteSessionManager, SessionStore } from '@jupyterlite/session';
 
 /**
- * The localforage plugin
+ * The default drive plugin.
  */
-const localforagePlugin: ServiceManagerPlugin<ILocalForage> = {
-  id: '@jupyterlite/services-extension:localforage',
+const defaultDrivePlugin: ServiceManagerPlugin<Contents.IDrive> = {
+  id: '@jupyterlite/services-extension:default-drive',
+  description: 'The default drive for the contents manager.',
   autoStart: true,
-  provides: ILocalForage,
-  activate: (_: null) => {
-    return { localforage };
-  },
-};
-
-/**
- * The volatile localforage memory plugin
- */
-const localforageMemoryPlugin: ServiceManagerPlugin<void> = {
-  id: '@jupyterlite/services-extension:localforage-memory-storage',
-  autoStart: true,
+  provides: IDefaultDrive,
   requires: [ILocalForage],
-  activate: async (_: null, forage: ILocalForage) => {
-    if (JSON.parse(PageConfig.getOption('enableMemoryStorage') || 'false')) {
-      console.warn(
-        'Memory storage fallback enabled: contents and settings may not be saved',
-      );
-      await ensureMemoryStorage(forage.localforage);
-    }
-  },
-};
-
-/**
- * The contents manager plugin.
- */
-const contentsManagerPlugin: ServiceManagerPlugin<Contents.IManager> = {
-  id: '@jupyterlite/services-extension:contents-manager',
-  description: 'The default contents manager plugin.',
-  autoStart: true,
-  provides: IContentsManager,
-  requires: [IDefaultDrive, ILocalForage, IServerSettings],
-  activate: (
-    _: null,
-    defaultDrive: Contents.IDrive,
-    forage: ILocalForage,
-    serverSettings: ServerConnection.ISettings,
-  ): Contents.IManager => {
+  activate: (_: null, forage: ILocalForage): Contents.IDrive => {
     const storageName = PageConfig.getOption('contentsStorageName');
     const storageDrivers = JSON.parse(
       PageConfig.getOption('contentsStorageDrivers') || 'null',
     );
     const { localforage } = forage;
-    const contents = new JupyterLiteContents({
-      defaultDrive,
-      serverSettings,
+    const drive = new BrowserStorageDrive({
       storageName,
       storageDrivers,
       localforage,
     });
-    return contents;
+    return drive;
   },
 };
 
@@ -191,6 +154,35 @@ const liteKernelSpecManagerPlugin: ServiceManagerPlugin<IKernelSpecs> = {
   provides: IKernelSpecs,
   activate: (_: null): IKernelSpecs => {
     return new KernelSpecs();
+  },
+};
+
+/**
+ * The localforage plugin
+ */
+const localforagePlugin: ServiceManagerPlugin<ILocalForage> = {
+  id: '@jupyterlite/services-extension:localforage',
+  autoStart: true,
+  provides: ILocalForage,
+  activate: (_: null) => {
+    return { localforage };
+  },
+};
+
+/**
+ * The volatile localforage memory plugin
+ */
+const localforageMemoryPlugin: ServiceManagerPlugin<void> = {
+  id: '@jupyterlite/services-extension:localforage-memory-storage',
+  autoStart: true,
+  requires: [ILocalForage],
+  activate: async (_: null, forage: ILocalForage) => {
+    if (JSON.parse(PageConfig.getOption('enableMemoryStorage') || 'false')) {
+      console.warn(
+        'Memory storage fallback enabled: contents and settings may not be saved',
+      );
+      await ensureMemoryStorage(forage.localforage);
+    }
   },
 };
 
@@ -333,7 +325,7 @@ const userManagerPlugin: ServiceManagerPlugin<User.IManager> = {
 };
 
 export default [
-  contentsManagerPlugin,
+  defaultDrivePlugin,
   eventManagerPlugin,
   kernelManagerPlugin,
   kernelSpecManagerPlugin,

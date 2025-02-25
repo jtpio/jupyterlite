@@ -1,7 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
-import { Session } from '@jupyterlab/services';
+import { Kernel, Session } from '@jupyterlab/services';
 import { SessionConnection } from '@jupyterlab/services/lib/session/default';
 import { ISessionStore } from './tokens';
 
@@ -59,6 +59,20 @@ export class LiteSessionConnection
       throw new Error('Session is disposed');
     }
     await this._litePatch({ type });
+  }
+
+  /**
+   * Change the kernel.
+   */
+  async changeKernel(
+    options: Partial<Kernel.IModel>,
+  ): Promise<Kernel.IKernelConnection | null> {
+    if (this.isDisposed) {
+      throw new Error('Session is disposed');
+    }
+
+    await this._litePatch({ kernel: options as Kernel.IModel });
+    return this.kernel;
   }
 
   /**
