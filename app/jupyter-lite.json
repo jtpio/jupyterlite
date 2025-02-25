@@ -16,6 +16,12 @@
       },
       {
         "extension": "./extension",
+        "liteExtension": false,
+        "load": "static/remoteEntry.e4ff09401a2f575928c0.js",
+        "name": "@jupyter-widgets/jupyterlab-manager"
+      },
+      {
+        "extension": "./extension",
         "liteExtension": true,
         "load": "static/remoteEntry.bcb6e0c823f3bdb2c1ce.js",
         "name": "@jupyterlite/javascript-kernel-extension"
