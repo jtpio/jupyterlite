@@ -42,14 +42,14 @@ export class LiteTranslatorConnector
       return json;
     } catch (e) {
       if (locale) {
-        // TODO: fix type upstream?
+        // TODO: fix type upstream: https://github.com/jupyterlab/jupyterlab/issues/17333
         return {
           data: {},
           message: `Language pack '${locale}' not installed!`,
         } as any;
       }
       return {
-        // TODO: fix type upstream?
+        // TODO: fix type upstream: https://github.com/jupyterlab/jupyterlab/issues/17333
         data: {
           en: { displayName: 'English', nativeName: 'English' },
         },

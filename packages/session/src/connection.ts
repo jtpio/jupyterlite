@@ -6,7 +6,8 @@ import { SessionConnection } from '@jupyterlab/services/lib/session/default';
 import { ISessionStore } from './tokens';
 
 /**
- * Custom SessionConnection class for use in JupyterLite.
+ * Custom SessionConnection class for use in JupyterLite, to be able to override the default
+ * use of the Jupyter Server Session API
  */
 export class LiteSessionConnection
   extends SessionConnection

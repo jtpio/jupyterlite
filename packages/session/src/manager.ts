@@ -5,7 +5,8 @@ import { LiteSessionConnection } from './connection';
 import { ISessionStore } from './tokens';
 
 /**
- * A class to handle requests to /api/sessions
+ * A custom session manager for JupyterLite, to be able to override the default
+ * `SessionConnection` and use of the Jupyter Server Session API.
  */
 export class LiteSessionManager extends SessionManager implements Session.IManager {
   /**

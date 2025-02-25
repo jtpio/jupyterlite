@@ -1,16 +1,8 @@
 import { IDisposable } from '@lumino/disposable';
 import { IRenderMime } from '@jupyterlab/rendermime-interfaces';
 import { PageConfig } from '@jupyterlab/coreutils';
-import { Contents } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
 import mime from 'mime';
-
-/**
- * The token for the settings service.
- */
-export const IContents = new Token<Contents.IManager>(
-  '@jupyterlite/contents:IContents',
-);
 
 /**
  * Commonly-used mimetypes

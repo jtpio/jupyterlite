@@ -8,7 +8,8 @@ import { LiteKernelConnection } from './connection';
 import { IKernelSpecs, IKernelStore } from './tokens';
 
 /**
- * A class to handle in-browser kernel management.
+ * A custom kernel manager for JupyterLite, to be able to override the default
+ * `KernelConnection` and use of the Jupyter Server Kernel API.
  */
 export class LiteKernelManager extends KernelManager implements Kernel.IManager {
   /**

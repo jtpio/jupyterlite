@@ -1,6 +1,6 @@
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
-import { Contents, ServerConnection } from '@jupyterlab/services';
+import { Contents, Drive, ServerConnection } from '@jupyterlab/services';
 
 import { INotebookContent } from '@jupyterlab/nbformat';
 
@@ -35,7 +35,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8');
 
 /**
- * A class to handle requests to /api/contents
+ * A custom drive to store files in the browser storage.
  */
 export class BrowserStorageDrive implements Contents.IDrive {
   /**
@@ -45,14 +45,14 @@ export class BrowserStorageDrive implements Contents.IDrive {
     this._localforage = options.localforage;
     this._storageName = options.storageName || DEFAULT_STORAGE_NAME;
     this._storageDrivers = options.storageDrivers || null;
+    this._serverSettings = options.serverSettings ?? ServerConnection.makeSettings();
     this._ready = new PromiseDelegate();
     this.initialize().catch(console.warn);
   }
 
-  get isDisposed(): boolean {
-    return this._isDisposed;
-  }
-
+  /**
+   * Dispose the drive.
+   */
   dispose(): void {
     if (this.isDisposed) {
       return;
@@ -61,18 +61,37 @@ export class BrowserStorageDrive implements Contents.IDrive {
     Signal.clearData(this);
   }
 
+  /**
+   * Whether the drive is disposed.
+   */
+  get isDisposed(): boolean {
+    return this._isDisposed;
+  }
+
+  /**
+   * The name of the drive.
+   */
   get name(): string {
     return DRIVE_NAME;
   }
 
+  /**
+   * The server settings of the drive.
+   */
   get serverSettings(): ServerConnection.ISettings {
-    return ServerConnection.makeSettings();
+    return this._serverSettings;
   }
 
+  /**
+   * Signal emitted when a file operation takes place.
+   */
   get fileChanged(): ISignal<Contents.IDrive, Contents.IChangedArgs> {
     return this._fileChanged;
   }
 
+  /**
+   * Get the download URL
+   */
   async getDownloadUrl(path: string): Promise<string> {
     throw new Error('Method not implemented.');
   }
@@ -917,6 +936,7 @@ export class BrowserStorageDrive implements Contents.IDrive {
   private _counters: LocalForage | undefined;
   private _checkpoints: LocalForage | undefined;
   private _localforage: typeof localforage;
+  private _serverSettings: ServerConnection.ISettings;
 }
 
 /**
@@ -924,14 +944,22 @@ export class BrowserStorageDrive implements Contents.IDrive {
  */
 export namespace BrowserStorageDrive {
   /**
-   * The options used to create a localForage-powered contents provider.
+   * The options used to create a BrowserStorageDrive.
    */
-  export interface IOptions {
+  export interface IOptions extends Drive.IOptions {
     /**
      * The name of the storage instance on e.g. IndexedDB, localStorage
      */
     storageName?: string | null;
+
+    /**
+     * The drivers to use for storage.
+     */
     storageDrivers?: string[] | null;
+
+    /**
+     * The localForage instance to use.
+     */
     localforage: typeof localforage;
   }
 }
