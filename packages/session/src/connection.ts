@@ -3,10 +3,7 @@
 
 import { Session } from '@jupyterlab/services';
 import { SessionConnection } from '@jupyterlab/services/lib/session/default';
-
-type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
+import { ISessionStore } from './tokens';
 
 /**
  * Custom SessionConnection class for use in JupyterLite.
@@ -18,8 +15,9 @@ export class LiteSessionConnection
   /**
    * Construct a new session connection.
    */
-  constructor(options: Session.ISessionConnection.IOptions) {
+  constructor(options: LiteSessionConnection.IOptions) {
     super(options);
+    this._sessionStore = options.sessionStore;
   }
 
   /**
@@ -29,8 +27,7 @@ export class LiteSessionConnection
     if (this.isDisposed) {
       throw new Error('Session is disposed');
     }
-    // TODO
-    // await shutdownSession(this.id, this.serverSettings);
+    this._sessionStore.shutdown(this.id);
     this.dispose();
   }
 
@@ -67,11 +64,26 @@ export class LiteSessionConnection
   /**
    * Custom patch for a session
    */
-  private async _litePatch(body: DeepPartial<Session.IModel>): Promise<Session.IModel> {
-    // const model = await updateSession({ ...body, id: this._id }, this.serverSettings);
-    // this.update(model);
-    // return model;
-    // TODO
-    return this.model;
+  private async _litePatch(body: Partial<Session.IModel>): Promise<Session.IModel> {
+    const model = await this._sessionStore.patch({ ...body, id: this.id });
+    this.update(model);
+    return model;
+  }
+
+  private _sessionStore: ISessionStore;
+}
+
+/**
+ * Namespace for LiteSessionConnection statics.
+ */
+export namespace LiteSessionConnection {
+  /**
+   * The options used to create a session connection.
+   */
+  export interface IOptions extends Session.ISessionConnection.IOptions {
+    /**
+     * The kernel store
+     */
+    sessionStore: ISessionStore;
   }
 }

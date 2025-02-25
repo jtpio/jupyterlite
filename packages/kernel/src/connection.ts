@@ -2,6 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import { Kernel, KernelConnection, KernelSpec } from '@jupyterlab/services';
+import { IKernelSpecs, IKernelStore } from './tokens';
 
 /**
  * Custom KernelConnection class for use in JupyterLite.
@@ -12,8 +13,10 @@ export class LiteKernelConnection
   extends KernelConnection
   implements Kernel.IKernelConnection
 {
-  constructor(options: Kernel.IKernelConnection.IOptions) {
+  constructor(options: LiteKernelConnection.IOptions) {
     super(options);
+    this._kernelSpecs = options.kernelSpecs;
+    this._kernelStore = options.kernelStore;
   }
 
   /**
@@ -22,7 +25,8 @@ export class LiteKernelConnection
    * @returns A promise that resolves to the kernel spec.
    */
   get spec(): Promise<KernelSpec.ISpecModel | undefined> {
-    throw new Error('Method not implemented.');
+    const spec = this._kernelSpecs.specs?.kernelspecs[this.model.name];
+    return Promise.resolve(spec);
   }
 
   /**
@@ -40,6 +44,8 @@ export class LiteKernelConnection
       serverSettings: this.serverSettings,
       // handleComms defaults to false since that is safer
       handleComms: false,
+      kernelSpecs: this._kernelSpecs,
+      kernelStore: this._kernelStore,
       ...options,
     });
   }
@@ -67,10 +73,7 @@ export class LiteKernelConnection
     this['_updateStatus']('restarting');
     this['_clearKernelState']();
     this['_kernelSession'] = '_RESTARTING_';
-    // TODO:
-    // await restapi.restartKernel(this.id, this.serverSettings);
-    // Reconnect to the kernel to address cases where kernel ports
-    // have changed during the restart.
+    await this._kernelStore.restart(this.id);
     await this.reconnect();
     this.hasPendingInput = false;
   }
@@ -80,9 +83,31 @@ export class LiteKernelConnection
    */
   async shutdown(): Promise<void> {
     if (this.status !== 'dead') {
-      // TODO:
-      // await restapi.shutdownKernel(this.id, this.serverSettings);
+      await this._kernelStore.shutdown(this.id);
     }
     this.handleShutdown();
+  }
+
+  private _kernelSpecs: IKernelSpecs;
+  private _kernelStore: IKernelStore;
+}
+
+/**
+ * A namespace for LiteKernelConnection statics.
+ */
+export namespace LiteKernelConnection {
+  /**
+   * The options used to create a LiteKernelConnection.
+   */
+  export interface IOptions extends Kernel.IKernelConnection.IOptions {
+    /**
+     * The kernel specs.
+     */
+    kernelSpecs: IKernelSpecs;
+
+    /**
+     * The kernel store.
+     */
+    kernelStore: IKernelStore;
   }
 }
