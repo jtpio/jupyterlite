@@ -22,6 +22,13 @@ import { IDocumentManager, IDocumentWidgetOpener } from '@jupyterlab/docmanager'
 
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 
+import {
+  DocumentConnectionManager,
+  ILSPDocumentConnectionManager,
+  IWidgetLSPAdapterTracker,
+  LanguageServerManager,
+} from '@jupyterlab/lsp';
+
 import { IMainMenu } from '@jupyterlab/mainmenu';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
@@ -374,6 +381,35 @@ const liteLogo: JupyterFrontEndPlugin<void> = {
 };
 
 /**
+ * A plugin to provide the language server connection manager
+ *
+ * Currently does nothing until LSP is supported in JupyterLite
+ */
+const lspConnectionManager: JupyterFrontEndPlugin<ILSPDocumentConnectionManager> = {
+  id: '@jupyterlite/application-extension:lsp-connection-manager',
+  autoStart: true,
+  requires: [IWidgetLSPAdapterTracker],
+  provides: ILSPDocumentConnectionManager,
+  activate: (app: JupyterFrontEnd, tracker: IWidgetLSPAdapterTracker) => {
+    class LiteLanguageServerManager extends LanguageServerManager {
+      async fetchSessions(): Promise<void> {
+        // no-op
+      }
+    }
+
+    const languageServerManager = new LiteLanguageServerManager({
+      settings: app.serviceManager.serverSettings,
+    });
+    const connectionManager = new DocumentConnectionManager({
+      languageServerManager,
+      adapterTracker: tracker,
+    });
+
+    return connectionManager;
+  },
+};
+
+/**
  * A plugin to trigger a refresh of the commands when the shell layout changes.
  */
 const notifyCommands: JupyterFrontEndPlugin<void> = {
@@ -684,6 +720,7 @@ const plugins: JupyterFrontEndPlugin<any>[] = [
   downloadPlugin,
   emscriptenFileSystemPlugin,
   liteLogo,
+  lspConnectionManager,
   notifyCommands,
   opener,
   serviceWorkerPlugin,

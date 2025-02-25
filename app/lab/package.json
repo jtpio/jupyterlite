@@ -320,6 +320,7 @@
       "@jupyterlab/filebrowser-extension:download",
       "@jupyterlab/filebrowser-extension:share-file",
       "@jupyterlab/help-extension:about",
+      "@jupyterlab/lsp-extension:plugin",
       "@jupyterlab/services-extension:connection-status",
       "@jupyterlab/services-extension:event-manager",
       "@jupyterlab/services-extension:kernel-manager",
