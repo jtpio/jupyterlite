@@ -58,8 +58,7 @@ export class LiteKernelConnection
     if (this.status === 'dead') {
       throw new Error('Kernel is dead');
     }
-    // TODO
-    // return restapi.interruptKernel(this.id, this.serverSettings);
+    // TODO: support interrupts
   }
 
   /**
