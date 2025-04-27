@@ -57,6 +57,8 @@ import { Widget } from '@lumino/widgets';
 
 import React from 'react';
 
+import { ClearDataDialog, IClearOptions } from './clear-data-dialog';
+
 /**
  * A regular expression to match path to notebooks, documents and consoles
  */
@@ -629,83 +631,13 @@ const clearBrowserData: JupyterFrontEndPlugin<void> = {
     const trans = translator.load(I18N_BUNDLE);
     const category = trans.__('Help');
 
-    interface IClearOptions {
-      clearSettings: boolean;
-      clearContents: boolean;
-    }
+    const isBrowswerStorageDrive = defaultDrive instanceof BrowserStorageDrive;
+    const isLiteSettingsManager = settingManager instanceof Settings;
 
-    // Create the dialog body
-    class ClearDataDialog extends Widget {
-      constructor() {
-        super();
-        this.addClass('jp-ClearData-dialog');
-
-        // Create container for the form elements
-        const container = document.createElement('div');
-        container.className = 'jp-ClearData-container';
-
-        // Title/description
-        const description = document.createElement('p');
-        description.textContent = trans.__(
-          'Clearing browser data will remove data stored in your browser. ' +
-            'This operation cannot be undone.',
-        );
-        container.appendChild(description);
-
-        // Settings checkbox
-        this.settingsCheckbox = document.createElement('input');
-        this.settingsCheckbox.type = 'checkbox';
-        this.settingsCheckbox.id = 'jp-ClearData-settings';
-        this.settingsCheckbox.checked = true;
-
-        const settingsLabel = document.createElement('label');
-        settingsLabel.htmlFor = 'jp-ClearData-settings';
-        settingsLabel.textContent = trans.__('Settings and preferences');
-
-        const settingsContainer = document.createElement('div');
-        settingsContainer.className = 'jp-ClearData-option';
-        settingsContainer.appendChild(this.settingsCheckbox);
-        settingsContainer.appendChild(settingsLabel);
-
-        // Contents checkbox
-        this.contentsCheckbox = document.createElement('input');
-        this.contentsCheckbox.type = 'checkbox';
-        this.contentsCheckbox.id = 'jp-ClearData-contents';
-        this.contentsCheckbox.checked = true;
-
-        const contentsLabel = document.createElement('label');
-        contentsLabel.htmlFor = 'jp-ClearData-contents';
-        contentsLabel.textContent = trans.__('Files and notebooks');
-
-        const contentsContainer = document.createElement('div');
-        contentsContainer.className = 'jp-ClearData-option';
-        contentsContainer.appendChild(this.contentsCheckbox);
-        contentsContainer.appendChild(contentsLabel);
-
-        // Add options to container
-        container.appendChild(settingsContainer);
-        container.appendChild(contentsContainer);
-
-        // Add warning
-        const warning = document.createElement('div');
-        warning.className = 'jp-ClearData-warning';
-        warning.textContent = trans.__(
-          'This will reload the page after clearing the selected data.',
-        );
-        container.appendChild(warning);
-
-        this.node.appendChild(container);
-      }
-
-      getValue(): IClearOptions {
-        return {
-          clearSettings: this.settingsCheckbox.checked,
-          clearContents: this.contentsCheckbox.checked,
-        };
-      }
-
-      private settingsCheckbox: HTMLInputElement;
-      private contentsCheckbox: HTMLInputElement;
+    if (!isBrowswerStorageDrive && !isLiteSettingsManager) {
+      // not available if neither the default drive or the settings manager
+      // are the ones provided by JupyterLite by default
+      return;
     }
 
     const clearData = async (options: IClearOptions): Promise<void> => {
@@ -743,7 +675,7 @@ const clearBrowserData: JupyterFrontEndPlugin<void> = {
     commands.addCommand(CommandIDs.clearBrowserData, {
       label: trans.__('Clear Browser Data'),
       execute: async () => {
-        const body = new ClearDataDialog();
+        const body = new ClearDataDialog(translator);
 
         const result = await showDialog({
           title: trans.__('Clear Browser Data'),

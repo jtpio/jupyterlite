@@ -4,30 +4,3 @@
 |----------------------------------------------------------------------------*/
 
 @import url('./base.css');
-
-/* Clear Browser Data Dialog styles */
-
-.jp-ClearData-dialog {
-  min-width: 300px;
-}
-
-.jp-ClearData-container {
-  padding: 10px 0;
-}
-
-.jp-ClearData-option {
-  display: flex;
-  align-items: center;
-  margin: 12px 0;
-}
-
-.jp-ClearData-option label {
-  margin-left: 8px;
-  cursor: pointer;
-}
-
-.jp-ClearData-warning {
-  margin-top: 20px;
-  color: var(--jp-warn-color0);
-  font-size: 0.9em;
-}
