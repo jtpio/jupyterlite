@@ -52,12 +52,25 @@ function ClearDataDialogComponent(props: IClearDataDialogProps): JSX.Element {
 
   return (
     <div className="jp-ClearData-container">
-      <p>
-        {trans.__(
-          'Clearing browser data will remove data stored in your browser. ' +
-            'This operation cannot be undone.',
-        )}
-      </p>
+      <div className="jp-ClearData-warning-box">
+        <div className="jp-ClearData-warning-icon">⚠️</div>
+        <div className="jp-ClearData-warning-text">
+          <span className="jp-ClearData-warning-title">
+            {trans.__('Warning: Data Loss Risk')}
+          </span>
+          <p>
+            {trans.__(
+              'Clearing browser data will permanently remove data stored in your browser. ' +
+                'This operation cannot be undone and may result in loss of:',
+            )}
+          </p>
+          <ul>
+            <li>{trans.__('User settings and preferences')}</li>
+            <li>{trans.__('Notebooks and files stored in the browser')}</li>
+            <li>{trans.__('Unsaved work and changes')}</li>
+          </ul>
+        </div>
+      </div>
 
       <div
         className={`jp-ClearData-option ${
@@ -111,7 +124,7 @@ function ClearDataDialogComponent(props: IClearDataDialogProps): JSX.Element {
         </label>
       </div>
 
-      <div className="jp-ClearData-warning">
+      <div className="jp-ClearData-reload-notice">
         {trans.__('This will reload the page after clearing the selected data.')}
       </div>
     </div>
