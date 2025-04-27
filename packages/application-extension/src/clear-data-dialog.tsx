@@ -16,12 +16,21 @@ export interface IClearOptions {
 }
 
 /**
+ * Interface for availability of clear options
+ */
+export interface IClearAvailability {
+  canClearSettings: boolean;
+  canClearContents: boolean;
+}
+
+/**
  * Props for the ClearDataDialog component
  */
 interface IClearDataDialogProps {
   translator: ITranslator;
   settingsChecked: boolean;
   contentsChecked: boolean;
+  availability: IClearAvailability;
   setSettingsChecked: (checked: boolean) => void;
   setContentsChecked: (checked: boolean) => void;
 }
@@ -34,6 +43,7 @@ function ClearDataDialogComponent(props: IClearDataDialogProps): JSX.Element {
     translator,
     settingsChecked,
     contentsChecked,
+    availability,
     setSettingsChecked,
     setContentsChecked,
   } = props;
@@ -49,26 +59,56 @@ function ClearDataDialogComponent(props: IClearDataDialogProps): JSX.Element {
         )}
       </p>
 
-      <div className="jp-ClearData-option">
+      <div
+        className={`jp-ClearData-option ${
+          !availability.canClearSettings ? 'jp-mod-disabled' : ''
+        }`}
+      >
         <input
           id="jp-ClearData-settings"
           type="checkbox"
           checked={settingsChecked}
           onChange={(e) => setSettingsChecked(e.target.checked)}
+          disabled={!availability.canClearSettings}
         />
-        <label htmlFor="jp-ClearData-settings">
+        <label
+          htmlFor="jp-ClearData-settings"
+          className={!availability.canClearSettings ? 'jp-mod-disabled' : ''}
+        >
           {trans.__('Settings and preferences')}
+          {!availability.canClearSettings && (
+            <span className="jp-ClearData-unavailable">
+              {' '}
+              {trans.__('(unavailable)')}
+            </span>
+          )}
         </label>
       </div>
 
-      <div className="jp-ClearData-option">
+      <div
+        className={`jp-ClearData-option ${
+          !availability.canClearContents ? 'jp-mod-disabled' : ''
+        }`}
+      >
         <input
           id="jp-ClearData-contents"
           type="checkbox"
           checked={contentsChecked}
           onChange={(e) => setContentsChecked(e.target.checked)}
+          disabled={!availability.canClearContents}
         />
-        <label htmlFor="jp-ClearData-contents">{trans.__('Files and notebooks')}</label>
+        <label
+          htmlFor="jp-ClearData-contents"
+          className={!availability.canClearContents ? 'jp-mod-disabled' : ''}
+        >
+          {trans.__('Files and notebooks')}
+          {!availability.canClearContents && (
+            <span className="jp-ClearData-unavailable">
+              {' '}
+              {trans.__('(unavailable)')}
+            </span>
+          )}
+        </label>
       </div>
 
       <div className="jp-ClearData-warning">
@@ -86,12 +126,20 @@ export class ClearDataDialog extends ReactWidget {
    * Create a new clear data dialog
    *
    * @param translator - The translator instance
+   * @param availability - The availability of clear options
    */
-  constructor(translator: ITranslator) {
+  constructor(
+    translator: ITranslator,
+    availability: IClearAvailability = {
+      canClearSettings: true,
+      canClearContents: true,
+    },
+  ) {
     super();
     this._translator = translator;
-    this._settingsChecked = true;
-    this._contentsChecked = true;
+    this._settingsChecked = availability.canClearSettings;
+    this._contentsChecked = availability.canClearContents;
+    this._availability = availability;
     this.addClass('jp-ClearData-dialog');
   }
 
@@ -100,8 +148,8 @@ export class ClearDataDialog extends ReactWidget {
    */
   getValue(): IClearOptions {
     return {
-      clearSettings: this._settingsChecked,
-      clearContents: this._contentsChecked,
+      clearSettings: this._settingsChecked && this._availability.canClearSettings,
+      clearContents: this._contentsChecked && this._availability.canClearContents,
     };
   }
 
@@ -114,6 +162,7 @@ export class ClearDataDialog extends ReactWidget {
         translator={this._translator}
         settingsChecked={this._settingsChecked}
         contentsChecked={this._contentsChecked}
+        availability={this._availability}
         setSettingsChecked={(checked: boolean) => {
           this._settingsChecked = checked;
           this.update();
@@ -129,4 +178,5 @@ export class ClearDataDialog extends ReactWidget {
   private _translator: ITranslator;
   private _settingsChecked: boolean;
   private _contentsChecked: boolean;
+  private _availability: IClearAvailability;
 }

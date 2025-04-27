@@ -631,10 +631,10 @@ const clearBrowserData: JupyterFrontEndPlugin<void> = {
     const trans = translator.load(I18N_BUNDLE);
     const category = trans.__('Help');
 
-    const isBrowswerStorageDrive = defaultDrive instanceof BrowserStorageDrive;
+    const isBrowserStorageDrive = defaultDrive instanceof BrowserStorageDrive;
     const isLiteSettingsManager = settingManager instanceof Settings;
 
-    if (!isBrowswerStorageDrive && !isLiteSettingsManager) {
+    if (!isBrowserStorageDrive && !isLiteSettingsManager) {
       // not available if neither the default drive or the settings manager
       // are the ones provided by JupyterLite by default
       return;
@@ -644,38 +644,31 @@ const clearBrowserData: JupyterFrontEndPlugin<void> = {
       const { clearSettings, clearContents } = options;
       const promises: Promise<void>[] = [];
 
-      if (clearContents && defaultDrive) {
-        try {
-          const browserStorageDrive = defaultDrive as BrowserStorageDrive;
-          browserStorageDrive.clearStorage();
-        } catch (error) {
-          console.error('Error clearing contents:', error);
-        }
+      if (clearContents && isBrowserStorageDrive) {
+        const browserStorageDrive = defaultDrive as BrowserStorageDrive;
+        promises.push(browserStorageDrive.clearStorage());
       }
 
-      if (clearSettings && settingManager) {
-        try {
-          // Use the settings manager's clear method directly with proper casting
-          const settings = settingManager as Settings;
-          if (typeof settings.clear === 'function') {
-            promises.push(settings.clear());
-          }
-        } catch (error) {
-          console.error('Error clearing settings:', error);
-        }
+      if (clearSettings && isLiteSettingsManager) {
+        const settings = settingManager as Settings;
+        promises.push(settings.clear());
       }
 
-      // Wait for all clear operations to complete
       await Promise.all(promises);
 
-      // Reload the page to apply changes
       window.location.reload();
     };
 
     commands.addCommand(CommandIDs.clearBrowserData, {
       label: trans.__('Clear Browser Data'),
       execute: async () => {
-        const body = new ClearDataDialog(translator);
+        // Pass the availability information to the dialog
+        const availability = {
+          canClearSettings: isLiteSettingsManager && !!settingManager,
+          canClearContents: isBrowserStorageDrive && !!defaultDrive,
+        };
+
+        const body = new ClearDataDialog(translator, availability);
 
         const result = await showDialog({
           title: trans.__('Clear Browser Data'),
