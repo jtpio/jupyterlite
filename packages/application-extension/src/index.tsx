@@ -618,12 +618,11 @@ const clearBrowserData: JupyterFrontEndPlugin<void> = {
   id: '@jupyterlite/application-extension:clear-browser-data',
   autoStart: true,
   requires: [ITranslator],
-  optional: [ICommandPalette, IMainMenu, ISettingManager, IDefaultDrive],
+  optional: [ICommandPalette, ISettingManager, IDefaultDrive],
   activate: (
     app: JupyterFrontEnd,
     translator: ITranslator,
     palette: ICommandPalette | null,
-    menu: IMainMenu | null,
     settingManager: Setting.IManager | null,
     defaultDrive: Contents.IDrive | null,
   ): void => {
@@ -687,10 +686,6 @@ const clearBrowserData: JupyterFrontEndPlugin<void> = {
 
     if (palette) {
       palette.addItem({ command: CommandIDs.clearBrowserData, category });
-    }
-
-    if (menu) {
-      menu.helpMenu.addGroup([{ command: CommandIDs.clearBrowserData }], 10);
     }
   },
 };
