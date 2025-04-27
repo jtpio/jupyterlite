@@ -30,6 +30,12 @@ import {
 } from '@jupyterlab/lsp';
 
 import { IMainMenu } from '@jupyterlab/mainmenu';
+import {
+  Contents,
+  IDefaultDrive,
+  ISettingManager,
+  Setting,
+} from '@jupyterlab/services';
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
@@ -40,6 +46,10 @@ import { downloadIcon, linkIcon } from '@jupyterlab/ui-components';
 import { IServiceWorkerManager, ServiceWorkerManager } from '@jupyterlite/server';
 
 import { liteIcon, liteWordmark } from '@jupyterlite/ui-components';
+
+import { BrowserStorageDrive } from '@jupyterlite/contents';
+
+import { Settings } from '@jupyterlite/settings';
 
 import { filter } from '@lumino/algorithm';
 
@@ -68,6 +78,8 @@ namespace CommandIDs {
   export const filebrowserDownload = 'filebrowser:download';
 
   export const copyShareableLink = 'filebrowser:share-main';
+
+  export const clearBrowserData = 'application:clear-browser-data';
 }
 
 /**
@@ -597,8 +609,170 @@ const shareFile: JupyterFrontEndPlugin<void> = {
   },
 };
 
+/**
+ * A plugin to add a command for clearing browser data.
+ */
+const clearBrowserData: JupyterFrontEndPlugin<void> = {
+  id: '@jupyterlite/application-extension:clear-browser-data',
+  autoStart: true,
+  requires: [ITranslator],
+  optional: [ICommandPalette, IMainMenu, ISettingManager, IDefaultDrive],
+  activate: (
+    app: JupyterFrontEnd,
+    translator: ITranslator,
+    palette: ICommandPalette | null,
+    menu: IMainMenu | null,
+    settingManager: Setting.IManager | null,
+    defaultDrive: Contents.IDrive | null,
+  ): void => {
+    const { commands } = app;
+    const trans = translator.load(I18N_BUNDLE);
+    const category = trans.__('Help');
+
+    interface IClearOptions {
+      clearSettings: boolean;
+      clearContents: boolean;
+    }
+
+    // Create the dialog body
+    class ClearDataDialog extends Widget {
+      constructor() {
+        super();
+        this.addClass('jp-ClearData-dialog');
+
+        // Create container for the form elements
+        const container = document.createElement('div');
+        container.className = 'jp-ClearData-container';
+
+        // Title/description
+        const description = document.createElement('p');
+        description.textContent = trans.__(
+          'Clearing browser data will remove data stored in your browser. ' +
+            'This operation cannot be undone.',
+        );
+        container.appendChild(description);
+
+        // Settings checkbox
+        this.settingsCheckbox = document.createElement('input');
+        this.settingsCheckbox.type = 'checkbox';
+        this.settingsCheckbox.id = 'jp-ClearData-settings';
+        this.settingsCheckbox.checked = true;
+
+        const settingsLabel = document.createElement('label');
+        settingsLabel.htmlFor = 'jp-ClearData-settings';
+        settingsLabel.textContent = trans.__('Settings and preferences');
+
+        const settingsContainer = document.createElement('div');
+        settingsContainer.className = 'jp-ClearData-option';
+        settingsContainer.appendChild(this.settingsCheckbox);
+        settingsContainer.appendChild(settingsLabel);
+
+        // Contents checkbox
+        this.contentsCheckbox = document.createElement('input');
+        this.contentsCheckbox.type = 'checkbox';
+        this.contentsCheckbox.id = 'jp-ClearData-contents';
+        this.contentsCheckbox.checked = true;
+
+        const contentsLabel = document.createElement('label');
+        contentsLabel.htmlFor = 'jp-ClearData-contents';
+        contentsLabel.textContent = trans.__('Files and notebooks');
+
+        const contentsContainer = document.createElement('div');
+        contentsContainer.className = 'jp-ClearData-option';
+        contentsContainer.appendChild(this.contentsCheckbox);
+        contentsContainer.appendChild(contentsLabel);
+
+        // Add options to container
+        container.appendChild(settingsContainer);
+        container.appendChild(contentsContainer);
+
+        // Add warning
+        const warning = document.createElement('div');
+        warning.className = 'jp-ClearData-warning';
+        warning.textContent = trans.__(
+          'This will reload the page after clearing the selected data.',
+        );
+        container.appendChild(warning);
+
+        this.node.appendChild(container);
+      }
+
+      getValue(): IClearOptions {
+        return {
+          clearSettings: this.settingsCheckbox.checked,
+          clearContents: this.contentsCheckbox.checked,
+        };
+      }
+
+      private settingsCheckbox: HTMLInputElement;
+      private contentsCheckbox: HTMLInputElement;
+    }
+
+    const clearData = async (options: IClearOptions): Promise<void> => {
+      const { clearSettings, clearContents } = options;
+      const promises: Promise<void>[] = [];
+
+      if (clearContents && defaultDrive) {
+        try {
+          const browserStorageDrive = defaultDrive as BrowserStorageDrive;
+          browserStorageDrive.clearStorage();
+        } catch (error) {
+          console.error('Error clearing contents:', error);
+        }
+      }
+
+      if (clearSettings && settingManager) {
+        try {
+          // Use the settings manager's clear method directly with proper casting
+          const settings = settingManager as Settings;
+          if (typeof settings.clear === 'function') {
+            promises.push(settings.clear());
+          }
+        } catch (error) {
+          console.error('Error clearing settings:', error);
+        }
+      }
+
+      // Wait for all clear operations to complete
+      await Promise.all(promises);
+
+      // Reload the page to apply changes
+      window.location.reload();
+    };
+
+    commands.addCommand(CommandIDs.clearBrowserData, {
+      label: trans.__('Clear Browser Data'),
+      execute: async () => {
+        const body = new ClearDataDialog();
+
+        const result = await showDialog({
+          title: trans.__('Clear Browser Data'),
+          body,
+          buttons: [
+            Dialog.cancelButton({ label: trans.__('Cancel') }),
+            Dialog.warnButton({ label: trans.__('Clear') }),
+          ],
+        });
+        if (result.button.accept) {
+          return clearData(body.getValue());
+        }
+        return await Promise.resolve();
+      },
+    });
+
+    if (palette) {
+      palette.addItem({ command: CommandIDs.clearBrowserData, category });
+    }
+
+    if (menu) {
+      menu.helpMenu.addGroup([{ command: CommandIDs.clearBrowserData }], 10);
+    }
+  },
+};
+
 const plugins: JupyterFrontEndPlugin<any>[] = [
   about,
+  clearBrowserData,
   downloadPlugin,
   liteLogo,
   lspConnectionManager,
