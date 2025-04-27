@@ -25,7 +25,7 @@
 /* Enhanced warning styles */
 .jp-ClearData-warning-box {
   display: flex;
-  background-color: var(--jp-warn-color0);
+  background-color: var(--jp-warn-color1);
   border: 1px solid var(--jp-warn-color1);
   border-radius: 4px;
   padding: 12px;
