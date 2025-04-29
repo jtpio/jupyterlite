@@ -197,6 +197,7 @@ export class KernelStatusWidget extends ReactWidget {
     this._model = options.model;
     this._onClick = options.onClick || (() => {});
     this.addClass('jp-KernelStatus-widget');
+    this.addClass('jp-mod-highlighted');
 
     // Make the widget clickable
     this.node.style.cursor = 'pointer';
