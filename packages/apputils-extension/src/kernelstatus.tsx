@@ -7,8 +7,6 @@ import { IKernelStatus, KernelStatus, KernelStatusWidget } from '@jupyterlite/ap
 
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
-
 import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 
 import { Kernel } from '@jupyterlab/services';
@@ -25,12 +23,11 @@ const kernelStatusPlugin: JupyterFrontEndPlugin<IKernelStatus> = {
   id: PLUGIN_ID,
   autoStart: true,
   requires: [INotebookTracker],
-  optional: [ISettingRegistry, IToolbarWidgetRegistry],
+  optional: [IToolbarWidgetRegistry],
   provides: IKernelStatus,
   activate: (
     app: JupyterFrontEnd,
     notebookTracker: INotebookTracker,
-    settingRegistry: ISettingRegistry | null,
     toolbarRegistry: IToolbarWidgetRegistry | null,
   ): IKernelStatus => {
     const { commands } = app;
