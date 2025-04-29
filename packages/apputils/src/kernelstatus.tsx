@@ -5,6 +5,8 @@ import React, { useState, useEffect } from 'react';
 
 import { ReactWidget } from '@jupyterlab/apputils';
 
+import { Kernel } from '@jupyterlab/services';
+
 import { ISignal, Signal } from '@lumino/signaling';
 
 import { IKernelStatus } from './tokens';
@@ -16,7 +18,7 @@ export class KernelStatus implements IKernelStatus {
   /**
    * Current execution status of the kernel.
    */
-  get status(): IKernelStatus.Status {
+  get status(): Kernel.Status {
     return this._status;
   }
 
@@ -30,7 +32,7 @@ export class KernelStatus implements IKernelStatus {
   /**
    * Signal emitted when the kernel status changes.
    */
-  get statusChanged(): ISignal<IKernelStatus, IKernelStatus.Status> {
+  get statusChanged(): ISignal<IKernelStatus, Kernel.Status> {
     return this._statusChanged;
   }
 
@@ -56,7 +58,7 @@ export class KernelStatus implements IKernelStatus {
    *
    * @param status - The new status
    */
-  setStatus(status: IKernelStatus.Status): void {
+  setStatus(status: Kernel.Status): void {
     if (this._status === status) {
       return;
     }
@@ -76,9 +78,9 @@ export class KernelStatus implements IKernelStatus {
     });
   }
 
-  private _status: IKernelStatus.Status = 'idle';
+  private _status: Kernel.Status = 'idle';
   private _logs: IKernelStatus.ILog[] = [];
-  private _statusChanged = new Signal<IKernelStatus, IKernelStatus.Status>(this);
+  private _statusChanged = new Signal<IKernelStatus, Kernel.Status>(this);
   private _logsChanged = new Signal<IKernelStatus, IKernelStatus.ILog>(this);
 }
 
@@ -86,10 +88,10 @@ export class KernelStatus implements IKernelStatus {
  * A React component for displaying kernel status.
  */
 function KernelStatusComponent(props: { model: IKernelStatus }): JSX.Element {
-  const [status, setStatus] = useState<IKernelStatus.Status>(props.model.status);
+  const [status, setStatus] = useState<Kernel.Status>(props.model.status);
 
   useEffect(() => {
-    const onChange = (_: any, newStatus: IKernelStatus.Status) => {
+    const onChange = (_: any, newStatus: Kernel.Status) => {
       setStatus(newStatus);
     };
 
@@ -100,12 +102,13 @@ function KernelStatusComponent(props: { model: IKernelStatus }): JSX.Element {
     };
   }, [props.model]);
 
-  const isError = status === 'dead' || status === 'unknown';
+  const isError = status === 'dead';
   const isBusy =
     status === 'busy' ||
     status === 'starting' ||
     status === 'restarting' ||
-    status === 'autorestarting';
+    status === 'autorestarting' ||
+    status === 'unknown';
   const isIdle = status === 'idle';
 
   // Return the appropriate icon and text based on status

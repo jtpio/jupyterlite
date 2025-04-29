@@ -2,7 +2,7 @@
   "title": "Kernel Status",
   "description": "Settings for the kernel status widget",
   "jupyter.lab.toolbars": {
-    "Notebook": [{ "name": "kernelStatus", "rank": 1010 }]
+    "Notebook": [{ "name": "kernelStatus", "rank": 995 }]
   },
   "properties": {
     "enabled": {

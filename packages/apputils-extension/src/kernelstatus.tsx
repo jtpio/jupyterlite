@@ -11,6 +11,8 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
 import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 
+import { Kernel } from '@jupyterlab/services';
+
 /**
  * The plugin id.
  */
@@ -40,7 +42,7 @@ const kernelStatusPlugin: JupyterFrontEndPlugin<IKernelStatus> = {
 
       // Update status when kernel status changes
       sessionContext.statusChanged.connect((_, status) => {
-        kernelStatus.setStatus(status as IKernelStatus.Status);
+        kernelStatus.setStatus(status as Kernel.Status);
 
         // Add a log entry
         kernelStatus.addLog({

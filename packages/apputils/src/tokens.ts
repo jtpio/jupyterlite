@@ -1,6 +1,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 
+import { Kernel } from '@jupyterlab/services';
 import { Token } from '@lumino/coreutils';
 import { ISignal } from '@lumino/signaling';
 
@@ -11,7 +12,7 @@ export interface IKernelStatus {
   /**
    * Signal emitted when the kernel status changes.
    */
-  readonly statusChanged: ISignal<IKernelStatus, IKernelStatus.Status>;
+  readonly statusChanged: ISignal<IKernelStatus, Kernel.Status>;
 
   /**
    * Signal emitted when new logs are added.
@@ -21,7 +22,7 @@ export interface IKernelStatus {
   /**
    * Current execution status of the kernel.
    */
-  readonly status: IKernelStatus.Status;
+  readonly status: Kernel.Status;
 
   /**
    * The execution logs.
@@ -40,7 +41,7 @@ export interface IKernelStatus {
    *
    * @param status - The new status
    */
-  setStatus(status: IKernelStatus.Status): void;
+  setStatus(status: Kernel.Status): void;
 
   /**
    * Clear all logs.
@@ -52,18 +53,6 @@ export interface IKernelStatus {
  * A namespace for IKernelStatus statics.
  */
 export namespace IKernelStatus {
-  /**
-   * The possible execution states of the kernel.
-   */
-  export type Status =
-    | 'unknown'
-    | 'starting'
-    | 'idle'
-    | 'busy'
-    | 'restarting'
-    | 'autorestarting'
-    | 'dead';
-
   /**
    * An interface for kernel log entries.
    */
