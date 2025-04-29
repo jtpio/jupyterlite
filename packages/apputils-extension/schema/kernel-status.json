@@ -4,14 +4,6 @@
   "jupyter.lab.toolbars": {
     "Notebook": [{ "name": "kernelStatus", "rank": 995 }]
   },
-  "properties": {
-    "enabled": {
-      "type": "boolean",
-      "title": "Enable Kernel Status Widget",
-      "description": "Whether to show the kernel status widget in the notebook toolbar",
-      "default": true
-    }
-  },
   "additionalProperties": false,
   "type": "object"
 }

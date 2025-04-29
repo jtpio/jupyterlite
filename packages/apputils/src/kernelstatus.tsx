@@ -87,7 +87,10 @@ export class KernelStatus implements IKernelStatus {
 /**
  * A React component for displaying kernel status.
  */
-function KernelStatusComponent(props: { model: IKernelStatus }): JSX.Element {
+function KernelStatusComponent(props: {
+  model: IKernelStatus;
+  onClick?: () => void;
+}): JSX.Element {
   const [status, setStatus] = useState<Kernel.Status>(props.model.status);
 
   useEffect(() => {
@@ -113,7 +116,12 @@ function KernelStatusComponent(props: { model: IKernelStatus }): JSX.Element {
 
   // Return the appropriate icon and text based on status
   return (
-    <div className={'jp-KernelStatus'}>
+    <div
+      className={'jp-KernelStatus'}
+      onClick={props.onClick}
+      style={{ cursor: 'pointer' }}
+      title="Click to open kernel logs"
+    >
       <div className="jp-KernelStatus-icon-container">
         {isBusy && (
           <div className="jp-KernelStatus-spinner">
@@ -187,7 +195,12 @@ export class KernelStatusWidget extends ReactWidget {
   constructor(options: KernelStatusWidget.IOptions) {
     super();
     this._model = options.model;
+    this._onClick = options.onClick || (() => {});
     this.addClass('jp-KernelStatus-widget');
+
+    // Make the widget clickable
+    this.node.style.cursor = 'pointer';
+    this.node.title = 'Click to open kernel logs';
   }
 
   /**
@@ -201,10 +214,11 @@ export class KernelStatusWidget extends ReactWidget {
    * Render the kernel status widget.
    */
   protected render(): JSX.Element {
-    return <KernelStatusComponent model={this._model} />;
+    return <KernelStatusComponent model={this._model} onClick={this._onClick} />;
   }
 
   private _model: IKernelStatus;
+  private _onClick: () => void;
 }
 
 /**
@@ -219,5 +233,10 @@ export namespace KernelStatusWidget {
      * The kernel status model to use.
      */
     model: IKernelStatus;
+
+    /**
+     * The click handler for the widget.
+     */
+    onClick?: () => void;
   }
 }

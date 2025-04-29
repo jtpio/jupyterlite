@@ -33,6 +33,8 @@ const kernelStatusPlugin: JupyterFrontEndPlugin<IKernelStatus> = {
     settingRegistry: ISettingRegistry | null,
     toolbarRegistry: IToolbarWidgetRegistry | null,
   ): IKernelStatus => {
+    const { commands } = app;
+
     // Create the kernel status model
     const kernelStatus = new KernelStatus();
 
@@ -75,30 +77,17 @@ const kernelStatusPlugin: JupyterFrontEndPlugin<IKernelStatus> = {
     if (toolbarRegistry) {
       // Create a kernel status widget factory
       const createKernelStatusWidget = () => {
-        return new KernelStatusWidget({ model: kernelStatus });
+        return new KernelStatusWidget({
+          model: kernelStatus,
+          onClick: () => {
+            commands.execute('logconsole:open');
+          },
+        });
       };
 
       // Add the kernel status widget to the notebook toolbar
       // Make sure this is registered with proper capitalization and matches the schema
       toolbarRegistry.addFactory('Notebook', 'kernelStatus', createKernelStatusWidget);
-    }
-
-    // Load the settings if available
-    if (settingRegistry) {
-      const loadSettings = () => {
-        void settingRegistry!
-          .load(PLUGIN_ID)
-          .then((settings) => {
-            const enabled = settings.get('enabled').composite as boolean;
-            console.log('Kernel status enabled:', enabled);
-          })
-          .catch((reason) => {
-            console.error('Failed to load kernel status settings', reason);
-          });
-      };
-
-      // Wait for the application to be restored before loading settings
-      void app.restored.then(loadSettings);
     }
 
     return kernelStatus;
