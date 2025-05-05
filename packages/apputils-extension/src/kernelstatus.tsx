@@ -64,6 +64,9 @@ const kernelStatusPlugin: JupyterFrontEndPlugin<void> = {
                 // rely on kernels properly reporting a critical state
                 if (level === 'critical') {
                   kernelStatus.setStatus('dead');
+                } else {
+                  // if new messages are logged, set the status back to busy
+                  kernelStatus.setStatus('busy');
                 }
               }
             });
