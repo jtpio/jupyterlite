@@ -23,34 +23,10 @@ export class KernelStatus implements IKernelStatus {
   }
 
   /**
-   * The execution logs.
-   */
-  get logs(): IKernelStatus.ILog[] {
-    return this._logs;
-  }
-
-  /**
    * Signal emitted when the kernel status changes.
    */
   get statusChanged(): ISignal<IKernelStatus, Kernel.Status> {
     return this._statusChanged;
-  }
-
-  /**
-   * Signal emitted when new logs are added.
-   */
-  get logsChanged(): ISignal<IKernelStatus, IKernelStatus.ILog> {
-    return this._logsChanged;
-  }
-
-  /**
-   * Add a log entry.
-   *
-   * @param log - The log entry to add
-   */
-  addLog(log: IKernelStatus.ILog): void {
-    this._logs.push(log);
-    this._logsChanged.emit(log);
   }
 
   /**
@@ -66,22 +42,8 @@ export class KernelStatus implements IKernelStatus {
     this._statusChanged.emit(status);
   }
 
-  /**
-   * Clear all logs.
-   */
-  clearLogs(): void {
-    this._logs = [];
-    this._logsChanged.emit({
-      level: 'info',
-      message: 'Logs cleared',
-      timestamp: Date.now(),
-    });
-  }
-
   private _status: Kernel.Status = 'idle';
-  private _logs: IKernelStatus.ILog[] = [];
   private _statusChanged = new Signal<IKernelStatus, Kernel.Status>(this);
-  private _logsChanged = new Signal<IKernelStatus, IKernelStatus.ILog>(this);
 }
 
 /**
@@ -201,7 +163,6 @@ export class KernelStatusWidget extends ReactWidget {
 
     // Make the widget clickable
     this.node.style.cursor = 'pointer';
-    this.node.title = 'Click to open kernel logs';
   }
 
   /**

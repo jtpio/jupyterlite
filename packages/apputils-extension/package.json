@@ -40,6 +40,7 @@
   "dependencies": {
     "@jupyterlab/application": "~4.4.1",
     "@jupyterlab/apputils": "~4.5.1",
+    "@jupyterlab/logconsole": "~4.4.1",
     "@jupyterlab/pluginmanager": "~4.4.1",
     "@jupyterlab/translation": "~4.4.1",
     "@jupyterlab/ui-components": "~4.4.1",

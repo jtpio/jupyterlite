@@ -3,13 +3,15 @@
 
 import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application';
 
-import { IKernelStatus, KernelStatus, KernelStatusWidget } from '@jupyterlite/apputils';
-
-import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
+import { NotebookPanel } from '@jupyterlab/notebook';
 
 import { IToolbarWidgetRegistry } from '@jupyterlab/apputils';
 
+import { ILoggerRegistry, ILogOutputModel } from '@jupyterlab/logconsole';
+
 import { Kernel } from '@jupyterlab/services';
+
+import { IKernelStatus, KernelStatus, KernelStatusWidget } from '@jupyterlite/apputils';
 
 /**
  * The plugin id.
@@ -19,75 +21,63 @@ const PLUGIN_ID = '@jupyterlite/apputils-extension:kernel-status';
 /**
  * A plugin that provides a kernel status model and widget.
  */
-const kernelStatusPlugin: JupyterFrontEndPlugin<IKernelStatus> = {
+const kernelStatusPlugin: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   autoStart: true,
-  requires: [INotebookTracker],
-  optional: [IToolbarWidgetRegistry],
+  optional: [IToolbarWidgetRegistry, ILoggerRegistry],
   provides: IKernelStatus,
   activate: (
     app: JupyterFrontEnd,
-    notebookTracker: INotebookTracker,
     toolbarRegistry: IToolbarWidgetRegistry | null,
-  ): IKernelStatus => {
+    loggerRegistry: ILoggerRegistry | null,
+  ): void => {
     const { commands } = app;
-
-    // Create the kernel status model
-    const kernelStatus = new KernelStatus();
-
-    // Add status monitoring to the notebook
-    notebookTracker.widgetAdded.connect((_, panel: NotebookPanel) => {
-      const sessionContext = panel.sessionContext;
-
-      // Update status when kernel status changes
-      sessionContext.statusChanged.connect((_, status) => {
-        kernelStatus.setStatus(status as Kernel.Status);
-
-        // Add a log entry
-        kernelStatus.addLog({
-          level: 'info',
-          message: `Kernel status changed to ${status}`,
-          timestamp: Date.now(),
-        });
-      });
-
-      // Handle kernel changed events
-      sessionContext.kernelChanged.connect((_, changed) => {
-        const { newValue } = changed;
-        if (newValue) {
-          kernelStatus.addLog({
-            level: 'info',
-            message: `Connected to kernel: ${newValue.name}`,
-            timestamp: Date.now(),
-          });
-        } else {
-          kernelStatus.addLog({
-            level: 'warning',
-            message: 'Kernel disconnected',
-            timestamp: Date.now(),
-          });
-        }
-      });
-    });
 
     // Register the widget with the toolbar registry
     if (toolbarRegistry) {
-      // Create a kernel status widget factory
-      const createKernelStatusWidget = () => {
-        return new KernelStatusWidget({
-          model: kernelStatus,
-          onClick: () => {
-            commands.execute('logconsole:open');
-          },
-        });
-      };
-
       // Add the kernel status widget to the notebook toolbar
-      // Make sure this is registered with proper capitalization and matches the schema
-      toolbarRegistry.addFactory('Notebook', 'kernelStatus', createKernelStatusWidget);
-    }
+      toolbarRegistry.addFactory<NotebookPanel>(
+        'Notebook',
+        'kernelStatus',
+        (panel: NotebookPanel) => {
+          // Create the kernel status model
+          const kernelStatus = new KernelStatus();
 
-    return kernelStatus;
+          const sessionContext = panel.sessionContext;
+
+          // Update status when kernel status changes
+          sessionContext.statusChanged.connect((_, status) => {
+            kernelStatus.setStatus(status as Kernel.Status);
+          });
+
+          if (loggerRegistry) {
+            const path = panel.context.path;
+            const logger = loggerRegistry.getLogger(path);
+            logger?.contentChanged.connect((_, args) => {
+              if (args === 'append') {
+                // get the latest message
+                const length = logger.outputAreaModel.length;
+                const latestMessage = logger.outputAreaModel.get(
+                  length - 1,
+                ) as ILogOutputModel;
+                const level = latestMessage.level;
+                // rely on kernels properly reporting a critical state
+                if (level === 'critical') {
+                  kernelStatus.setStatus('dead');
+                }
+              }
+            });
+          }
+
+          return new KernelStatusWidget({
+            model: kernelStatus,
+            onClick: () => {
+              commands.execute('logconsole:open');
+            },
+          });
+        },
+      );
+    }
   },
 };
 
