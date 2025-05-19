@@ -46,6 +46,7 @@ content/share
 pyodide/packages
 pyodide/wheels
 pyodide/pyodide
+pyodide/limitations
 ```
 
 ## Configuring the Xeus Python kernel

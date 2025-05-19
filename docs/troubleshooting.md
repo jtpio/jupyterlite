@@ -50,6 +50,19 @@ Clearing browser data will permanently remove data stored in your browser.
 This operation cannot be undone.
 ```
 
+## Understanding JupyterLite limitations
+
+JupyterLite runs entirely in the browser, which means it has certain limitations compared to traditional JupyterLab or Jupyter Notebooks that run with a Python backend.
+
+Some key limitations to be aware of when using JupyterLite:
+
+- Not all Python packages are compatible with the browser environment
+- Browser storage has size limitations compared to a regular file system
+- Some browser features may not work in private browsing mode or certain browsers
+- The Python kernel (based on Pyodide) has specific constraints due to running in WebAssembly
+
+For a comprehensive overview of these limitations, especially regarding the Python kernel, see the [JupyterLite and Pyodide Limitations](./howto/pyodide/limitations.md) guide.
+
 ## Access kernel logs
 
 If the kernel you are using reports logs to the log console, you may be able to see
