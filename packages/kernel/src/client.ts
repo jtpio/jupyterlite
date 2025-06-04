@@ -128,6 +128,14 @@ export class LiteKernelClient implements Kernel.IKernelAPIClient {
               // already held.
               void kernel.handleMessage(msg);
             }
+          } else if (msg.header.msg_type === 'interrupt_reply') {
+            if (this._interruptPromise !== undefined) {
+              // Interrupt handled by Service Worker.
+              this._interruptPromise.resolve(msg);
+            } else {
+              // Pass through to kernel for other interrupt handling.
+              void kernel.handleMessage(msg);
+            }
           } else {
             void processMsg(msg);
           }
@@ -249,7 +257,47 @@ export class LiteKernelClient implements Kernel.IKernelAPIClient {
    * Interrupt a kernel.
    */
   async interrupt(kernelId: string): Promise<void> {
-    // no-op
+    const kernel = this._kernels.get(kernelId);
+    if (!kernel) {
+      throw Error(`Kernel ${kernelId} does not exist`);
+    }
+
+    // Create a simple interrupt request to be sent through the ServiceWorker
+    const interruptRequest = {
+      session: kernelId,
+      kernel_id: kernelId,
+    };
+
+    // Send interrupt request via fetch to the ServiceWorker
+    try {
+      const response = await fetch('/api/interrupt/kernel', {
+        method: 'POST',
+        body: JSON.stringify({
+          data: interruptRequest,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Interrupt request failed: ' + response.statusText);
+      }
+    } catch (error) {
+      console.warn('Failed to send interrupt request via ServiceWorker:', error);
+      // Fall back to direct kernel message if ServiceWorker fails
+      const msg = KernelMessage.createMessage<any>({
+        msgType: 'interrupt_request',
+        channel: 'control',
+        session: kernelId,
+        content: {},
+      });
+
+      const sendMessage = this._kernelSends.get(kernelId);
+      if (sendMessage !== undefined) {
+        sendMessage(msg);
+      }
+    }
   }
 
   /**
@@ -311,6 +359,32 @@ export class LiteKernelClient implements Kernel.IKernelAPIClient {
   }
 
   /**
+   * Handle interrupt request received from Service Worker.
+   */
+  async handleInterrupt(interruptRequest: any): Promise<any> {
+    this._interruptPromise = new PromiseDelegate<any>();
+
+    // Create an interrupt_request message
+    const msg = KernelMessage.createMessage<any>({
+      msgType: 'interrupt_request',
+      channel: 'control',
+      session: interruptRequest.session || UUID.uuid4(),
+      content: {},
+    });
+
+    const kernelId = this._getClientKernel(interruptRequest.session);
+    if (kernelId !== undefined) {
+      const sendMessage = this._kernelSends.get(kernelId);
+      if (sendMessage !== undefined) {
+        sendMessage(msg);
+      }
+    }
+
+    // Promise is resolved by interrupt reply message.
+    return this._interruptPromise.promise;
+  }
+
+  /**
    * Get a kernel id corresponding to a client id.
    */
   private _getClientKernel(clientId: string): string | undefined {
@@ -327,6 +401,7 @@ export class LiteKernelClient implements Kernel.IKernelAPIClient {
   private _serverSettings: ServerConnection.ISettings;
   private _changed = new Signal<this, IObservableMap.IChangedArgs<IKernel>>(this);
   private _stdinPromise?: PromiseDelegate<KernelMessage.IInputReplyMsg>;
+  private _interruptPromise?: PromiseDelegate<any>;
   private _kernelSends = new ObservableMap<(msg: KernelMessage.IMessage) => void>();
 }
 

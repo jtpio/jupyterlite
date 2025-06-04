@@ -512,6 +512,10 @@ const serviceWorkerManagerPlugin: JupyterFrontEndPlugin<IServiceWorkerManager> =
         'kernel',
         kernelClient.handleStdin.bind(kernelClient),
       );
+      serviceWorkerManager.registerInterruptHandler(
+        'kernel',
+        kernelClient.handleInterrupt.bind(kernelClient),
+      );
     }
     return serviceWorkerManager;
   },

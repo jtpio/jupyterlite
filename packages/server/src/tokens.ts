@@ -49,6 +49,16 @@ export interface IServiceWorkerManager {
     pathnameSuffix: string,
     stdinHandler: IServiceWorkerManager.IStdinHandler,
   ): void;
+
+  /**
+   * Register a handler for interrupt requests received via ServiceWorker.
+   * @param pathnameSuffix URL pathname suffix to match such as "kernel" or "terminal".
+   * @param interruptHandler
+   */
+  registerInterruptHandler(
+    pathnameSuffix: string,
+    interruptHandler: IServiceWorkerManager.IInterruptHandler,
+  ): void;
 }
 
 /**
@@ -78,6 +88,17 @@ export namespace IServiceWorkerManager {
    * through without altering them.
    */
   export interface IStdinHandler {
+    (message: any): Promise<any>;
+  }
+
+  /**
+   * Interface for handler of interrupt requests received via Service Worker.
+   *
+   * Types are `any` because they are defined by whatever calls `registerInterruptHandler`
+   * and the ServiceWorkerManager does not need to understand them, it just passes them
+   * through without altering them.
+   */
+  export interface IInterruptHandler {
     (message: any): Promise<any>;
   }
 }

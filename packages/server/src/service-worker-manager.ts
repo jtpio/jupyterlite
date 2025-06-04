@@ -101,6 +101,18 @@ export class ServiceWorkerManager implements IServiceWorkerManager {
   }
 
   /**
+   * Register a handler for interrupt requests received via ServiceWorker.
+   * @param pathnameSuffix URL pathname suffix to match such as "kernel" or "terminal".
+   * @param interruptHandler
+   */
+  registerInterruptHandler(
+    pathnameSuffix: string,
+    interruptHandler: IServiceWorkerManager.IInterruptHandler,
+  ): void {
+    this._interruptHandlers.set(pathnameSuffix, interruptHandler);
+  }
+
+  /**
    * Initialize the ServiceWorkerManager.
    */
   private async _initialize(workerUrl: string): Promise<void> {
@@ -210,6 +222,8 @@ export class ServiceWorkerManager implements IServiceWorkerManager {
 
     if (pathname.includes('/api/stdin/')) {
       this._onStdinMessage(pathname, data);
+    } else if (pathname.includes('/api/interrupt/')) {
+      this._onInterruptMessage(pathname, data);
     } else {
       this._onDriveMessage(data);
     }
@@ -244,6 +258,24 @@ export class ServiceWorkerManager implements IServiceWorkerManager {
     }
   };
 
+  private _onInterruptMessage = async (pathname: string, data: any): Promise<void> => {
+    // Expecting pathname of the form '<optional something>/api/interrupt/<suffix>' from which
+    // suffix is used to identify which interruptHandler to call.
+    // `data: any` because ServiceWorkerManager accepts any data and passes it through
+    // to the interruptHandler without understanding or altering it.
+    const suffix = pathname.slice(pathname.lastIndexOf('/') + 1);
+    const interruptHandler = this._interruptHandlers.get(suffix);
+    if (interruptHandler !== undefined) {
+      const response = await interruptHandler(data);
+      this._broadcastChannel.postMessage({
+        response,
+        browsingContextId: this._browsingContextId,
+      });
+    } else {
+      console.warn(`No interrupt handler registered for '${pathname}'`);
+    }
+  };
+
   private _registration: ServiceWorkerRegistration | null = null;
   private _registrationChanged = new Signal<this, ServiceWorkerRegistration | null>(
     this,
@@ -254,4 +286,8 @@ export class ServiceWorkerManager implements IServiceWorkerManager {
   private _contents: Contents.IManager;
   private _driveContentsProcessor: DriveContentsProcessor;
   private _stdinHandlers = new Map<string, IServiceWorkerManager.IStdinHandler>();
+  private _interruptHandlers = new Map<
+    string,
+    IServiceWorkerManager.IInterruptHandler
+  >();
 }

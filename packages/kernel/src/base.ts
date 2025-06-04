@@ -137,6 +137,9 @@ export abstract class BaseKernel implements IKernel {
       case 'comm_close':
         await this.commClose(msg as KernelMessage.ICommCloseMsg);
         break;
+      case 'interrupt_request':
+        await this._interruptRequest(msg);
+        break;
       default:
         break;
     }
@@ -618,6 +621,26 @@ export abstract class BaseKernel implements IKernel {
       channel: 'shell',
       session: msg.header.session,
       content,
+    });
+
+    this._sendMessage(message);
+  }
+
+  /**
+   * Handle an interrupt_request message
+   *
+   * @param msg The parent message.
+   */
+  private async _interruptRequest(msg: KernelMessage.IMessage): Promise<void> {
+    // Create interrupt reply message with 'ok' status
+    const message = KernelMessage.createMessage<any>({
+      msgType: 'interrupt_reply',
+      channel: 'control',
+      session: msg.header.session,
+      parentHeader: msg.header,
+      content: {
+        status: 'ok',
+      },
     });
 
     this._sendMessage(message);

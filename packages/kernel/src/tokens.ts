@@ -44,6 +44,11 @@ export interface IKernelClient extends Kernel.IKernelAPIClient {
   ): Promise<KernelMessage.IInputReplyMsg>;
 
   /**
+   * Handle interrupt request received from Service Worker.
+   */
+  handleInterrupt(interruptRequest: any): Promise<any>;
+
+  /**
    * Shut down all kernels.
    */
   shutdownAll: () => Promise<void>;
