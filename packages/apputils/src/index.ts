@@ -6,3 +6,5 @@ export * from './pluginmanager';
 export * from './translation';
 export * from './statedb';
 export * from './workspaces';
+export * from './router';
+export * from './workspace-router';
