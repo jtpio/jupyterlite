@@ -273,11 +273,18 @@ export class DriveFSEmscriptenNodeOps implements IEmscriptenNodeOps {
 
   getattr = (value: IEmscriptenFSNode | IEmscriptenStream): IStats => {
     const node = this.node(value);
-    return {
+    const stats = {
       ...this.fs.API.getattr(this.fs.realPath(node)),
       mode: node.mode,
       ino: node.id,
     };
+
+    // Include dontFollow if it's set on the node
+    if (node.dontFollow !== undefined) {
+      stats.dontFollow = node.dontFollow;
+    }
+
+    return stats;
   };
 
   setattr = (value: IEmscriptenFSNode | IEmscriptenStream, attr: IStats): void => {
@@ -310,6 +317,19 @@ export class DriveFSEmscriptenNodeOps implements IEmscriptenNodeOps {
           }
           break;
         }
+        case 'dontFollow':
+          // Store dontFollow flag for symlink handling
+          node.dontFollow = value;
+          break;
+        case 'ctime':
+          // Creation time is handled at the API level, but we can store it on the node
+          // Convert to timestamp if it's a Date object
+          if (value instanceof Date) {
+            node.timestamp = value.getTime();
+          } else if (typeof value === 'number') {
+            node.timestamp = value;
+          }
+          break;
         default:
           console.warn('setattr', key, 'of', value, 'on', node, 'not yet implemented');
           break;

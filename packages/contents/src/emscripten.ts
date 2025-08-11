@@ -35,6 +35,7 @@ export interface IStats {
   mtime: Date | string;
   ctime: Date | string;
   timestamp?: number;
+  dontFollow?: boolean;
 }
 
 export interface IEmscriptenFSNode {
@@ -46,6 +47,7 @@ export interface IEmscriptenFSNode {
   stream_ops: IEmscriptenStreamOps;
   node_ops: IEmscriptenNodeOps;
   timestamp: number;
+  dontFollow?: boolean;
 }
 
 export interface IEmscriptenStream {
