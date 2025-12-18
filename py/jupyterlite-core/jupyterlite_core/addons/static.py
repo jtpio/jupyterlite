@@ -20,7 +20,8 @@ class StaticAddon(BaseAddon):
     app_archive = Instance(
         Path,
         help=(
-            """The path to a custom npm-style tarball (e.g. with `package/package.json`). """
+            """The path to a custom npm-style tarball (e.g. with `package/package.json`) """
+            """or a directory containing the app. """
             """This may alternately be specified with the `$JUPYTERLITE_APP_ARCHIVE` """
             """environment variable."""
         ),
@@ -28,15 +29,24 @@ class StaticAddon(BaseAddon):
 
     __all__ = ["pre_init", "init", "post_init", "pre_status"]
 
+    @property
+    def _is_app_archive_dir(self):
+        """Check if app_archive is a directory instead of an archive file."""
+        return self.app_archive is not None and self.app_archive.is_dir()
+
     def pre_status(self, manager):
         yield self.task(
             name=JUPYTERLITE_JSON,
             actions=[
                 lambda: print(
-                    f"""    tarball:         {self.app_archive.name} """
-                    f"""{int(self.app_archive.stat().st_size / (1024 * 1024))}MB"""
-                    if self.app_archive.exists()
-                    else "    tarball:        none"
+                    f"""    app dir:         {self.app_archive}"""
+                    if self._is_app_archive_dir
+                    else (
+                        f"""    tarball:         {self.app_archive.name} """
+                        f"""{int(self.app_archive.stat().st_size / (1024 * 1024))}MB"""
+                        if self.app_archive.exists()
+                        else "    tarball:        none"
+                    )
                 ),
                 lambda: print(f"""    output:          {self.manager.output_dir}"""),
                 lambda: print(f"""    lite dir:        {self.manager.lite_dir}"""),
@@ -54,16 +64,16 @@ class StaticAddon(BaseAddon):
         """
         output_dir = manager.output_dir
 
-        yield self.task(
+        task_kwargs = dict(
             name="output_dir",
             doc="clean out the lite directory",
-            file_dep=[self.app_archive],
             uptodate=[
                 doit.tools.config_changed(
                     dict(
                         apps=self.manager.apps,
                         no_sourcemaps=self.manager.no_sourcemaps,
                         no_unused_shared_packages=self.manager.no_unused_shared_packages,
+                        app_archive_is_dir=self._is_app_archive_dir,
                     )
                 )
             ],
@@ -73,22 +83,40 @@ class StaticAddon(BaseAddon):
             ],
         )
 
+        # Only add file_dep on app_archive when it's a file (not a directory)
+        if not self._is_app_archive_dir:
+            task_kwargs["file_dep"] = [self.app_archive]
+
+        yield self.task(**task_kwargs)
+
     def init(self, manager):
         """unpack and copy the tarball files into the output_dir"""
-        yield self.task(
-            name="unpack",
-            doc=f"unpack a 'gold master' JupyterLite from {self.app_archive.name}",
-            actions=[(self._unpack_stdlib, [])],
-            file_dep=[self.app_archive],
-            targets=[manager.output_dir / JUPYTERLITE_JSON],
-        )
+        if self._is_app_archive_dir:
+            yield self.task(
+                name="copy",
+                doc=f"copy JupyterLite app from {self.app_archive}",
+                actions=[(self._copy_from_dir, [])],
+                targets=[manager.output_dir / JUPYTERLITE_JSON],
+            )
+        else:
+            yield self.task(
+                name="unpack",
+                doc=f"unpack a 'gold master' JupyterLite from {self.app_archive.name}",
+                actions=[(self._unpack_from_archive, [])],
+                file_dep=[self.app_archive],
+                targets=[manager.output_dir / JUPYTERLITE_JSON],
+            )
 
     def post_init(self, manager):
         """maybe remove sourcemaps, or all static assets if an app is not installed"""
         output_dir = manager.output_dir
 
-        with tarfile.open(str(self.app_archive), "r:gz") as tar:
-            pkg_data = json.loads(tar.extractfile(tar.getmember("package/package.json")).read())
+        if self._is_app_archive_dir:
+            pkg_json_path = self.app_archive / "package.json"
+            pkg_data = json.loads(pkg_json_path.read_text(**UTF8))
+        else:
+            with tarfile.open(str(self.app_archive), "r:gz") as tar:
+                pkg_data = json.loads(tar.extractfile(tar.getmember("package/package.json")).read())
 
         all_apps = set(pkg_data["jupyterlite"]["apps"])
         mgr_apps = set(manager.apps if manager.apps else all_apps)
@@ -120,7 +148,13 @@ class StaticAddon(BaseAddon):
     def _default_app_archive(self):
         return self.manager.app_archive
 
-    def _unpack_stdlib(self):
+    def _copy_from_dir(self):
+        """copy the app directory into the output dir"""
+        output_dir = self.manager.output_dir
+        self.copy_one(self.app_archive, output_dir)
+        self.maybe_timestamp(output_dir)
+
+    def _unpack_from_archive(self):
         """extract the original static assets into the output dir"""
         output_dir = self.manager.output_dir
 

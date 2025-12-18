@@ -42,9 +42,9 @@ class LiteBuildConfig(LoggingConfigurable):
         help=("""the Lite apps to explicitly include in build e.g. lab, tree, repl"""),
     ).tag(config=True)
 
-    app_archive: Path = CPath(help="The app archive to use. env: JUPYTERLITE_APP_ARCHIVE").tag(
-        config=True
-    )
+    app_archive: Path = CPath(
+        help="The app archive or directory to use. env: JUPYTERLITE_APP_ARCHIVE"
+    ).tag(config=True)
 
     no_libarchive: bool = Bool(
         help="Don't detect and use libarchive-c for higher performance and more archives",
