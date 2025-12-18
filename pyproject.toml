@@ -2,14 +2,83 @@
 name = "jupyterlite-root"
 version = "0.8.0a0"
 
+# Dependency groups (PEP 735) for development dependencies
+# Install with: pip install --group dev
+[dependency-groups]
+# Core development
+dev = [
+    "hatch>=1.6.3,<2",
+    "jupyterlab>=4.6.0a0,<4.7",
+    "notebook>=7.6.0a0,<7.7",
+    "ruff>=0.8.3",
+    "pkginfo",
+    "twine>=5.1.1",
+    "watchfiles>=0.21",
+]
+
+# Testing
+test = [
+    "pytest>=7",
+    "pytest-console-scripts>=1.4.0",
+    "pytest-cov<7",
+    "pytest-html",
+    "pytest-xdist",
+    "ansi2html",
+    "jsonschema>=3",
+    "jupyter_server>=1.11,<3",
+    "jupyterlab_server>=2.8.1,<3",
+]
+
+# Documentation building
+docs = [
+    "sphinx>=5.1,<8.2",
+    "myst-nb>=1",
+    "pydata-sphinx-theme",
+    "sphinx-autodoc-typehints",
+    "sphinx-jsonschema",
+    "sphinxcontrib-mermaid",
+    "sphinxext-rediraffe",
+    "docutils>=0.18",
+    "pytest-check-links",
+]
+
+# Linting
+lint = [
+    "ruff>=0.8.3",
+    "jsonschema>=3",
+    "nbstripout",
+    "nbconvert",
+]
+
+# Demo site extensions
+demo = [
+    "jupyterlite-pyodide-kernel~=0.7.0",
+    "jupyterlite-p5-kernel~=0.2.0",
+    "bqplot~=0.12.43",
+    "ipycanvas~=0.13.2",
+    "ipycytoscape~=1.3.3",
+    "ipyleaflet~=0.19.1",
+    "ipympl~=0.9.4",
+    "ipyvue~=1.11.0",
+    "ipyvuetify~=1.9.4",
+    "ipywidgets~=8.1.3",
+    "jupyterlab-fasta~=3.3.0",
+    "jupyterlab-geojson~=3.4.0",
+    "jupyterlab-kernelspy~=4.0.0",
+    "jupyterlab-miami-nights~=0.4.2",
+    "jupyterlab-tour~=4.0.1",
+    "notebook>=7.6.0a0,<7.7",
+    "plotly~=5.22.0",
+]
+
 [tool.jupyter-releaser]
 skip = [ "build-python", "check-links", "check-python",]
 
 [tool.jupyter-releaser.hooks]
-before-bump-version = [ "python -m pip install jupyter-releaser -r requirements-build.txt -r requirements-lint.txt", "jlpm", ]
-after-bump-version = [ "doit repo:integrity", "jlpm lint", "jlpm",]
-before-build-npm = [ "doit build",]
-after-check-npm = [ "doit dist", "rm dist/jupyterlite-app-*.tgz",]
+before-bump-version = [ "python -m pip install jupyter-releaser hatch jupyterlab>=4.5.1,<4.6", "jlpm install", ]
+after-bump-version = [ "jlpm deduplicate", "jlpm install", "jlpm lint", ]
+before-build-npm = [ "jlpm build:prod", "jlpm pack:app", "jlpm build:py", ]
+after-check-npm = [ "jlpm dist:copy", "rm dist/jupyterlite-app-*.tgz", ]
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump-version.py --force"
@@ -53,6 +122,7 @@ ignore = [
 # S603 `subprocess` call: check for execution of untrusted input
 # S607 Starting a process with a partial executable path
 "docs/conf.py" = ["A001", "S603", "S607"]
+"scripts/watch-content.py" = ["S603"]
 "**/conftest.py" = ["S603", "S607"]
 
 # TID252 [*] Relative imports from parent modules are banned

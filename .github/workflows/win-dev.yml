@@ -9,31 +9,23 @@ on:
       - '*'
 
 env:
-  CACHE_EPOCH: 7
-  CI: 0
-  WIN_DEV_IN_CI: 1
+  CACHE_EPOCH: 8
   PYTHONUTF8: 1
 
 jobs:
   win-dev:
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: cmd /C CALL {0}
     steps:
       - name: Set git to use LF
         run: |
           git config --global core.autocrlf false
           git config --global core.eol lf
+
       - name: Checkout
         uses: actions/checkout@v6
-      - uses: mamba-org/setup-micromamba@v2
-        with:
-          micromamba-version: '1.5.1-0'
-          environment-file: .binder/environment.yml
-          init-shell: cmd.exe
-          cache-environment: true
-          post-cleanup: 'all'
+
+      - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+
       - name: Cache (node_modules)
         uses: actions/cache@v4
         id: cache-node-modules
@@ -41,13 +33,39 @@ jobs:
           path: node_modules/
           key: |
             ${{ env.CACHE_EPOCH }}-${{ runner.os }}-node-modules-${{ hashFiles('yarn.lock') }}
-      - name: Node
-        run: doit setup || doit setup || doit setup
+
+      - name: Cache (pip)
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: |
+            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-pip-dev-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-pip-dev-
+            ${{ env.CACHE_EPOCH }}-${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install hatch jupyterlab>=4.5.1,<4.6 ruff
+
+      - name: Install JS dependencies
+        run: jlpm install
+
       - name: Build
-        run: doit build
-      - name: Dist
-        run: doit dist
-      - name: Dev
-        run: doit dev
+        run: jlpm build
+
+      - name: Build Python packages
+        run: jlpm build:py
+
+      - name: Pack app
+        run: jlpm pack:app
+
+      - name: Copy to dist
+        run: jlpm dist:copy
+
+      - name: Install (dev)
+        run: pip install -e './py/jupyterlite-core[all,test]' -e ./py/jupyterlite
+
       - name: Lint
         run: jlpm lint

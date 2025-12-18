@@ -6,26 +6,28 @@ runs:
     - name: Base Setup
       uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-    - name: Setup pip (base)
+    - name: Setup pip
       shell: bash
-      run: python3 -m pip install --user -U pip setuptools wheel
+      run: |
+        python3 -m pip install --user -U pip setuptools wheel
+        python3 -m pip install hatch jupyterlab>=4.5.1,<4.6
 
-    - name: Setup pip (build)
+    - name: Install JS dependencies
       shell: bash
-      run: python3 -m pip install -r requirements-build.txt
+      run: jlpm install
 
-    - name: Install
+    - name: Build JS (production)
       shell: bash
-      run: doit setup:js
+      run: jlpm build:prod
 
-    - name: Build (js)
+    - name: Pack app
       shell: bash
-      run: doit -n4 build:js* || doit build:js*
+      run: jlpm pack:app
 
-    - name: Build (py)
+    - name: Build Python packages
       shell: bash
-      run: doit -n4 build:py*
+      run: jlpm build:py
 
-    - name: Dist
+    - name: Copy to dist
       shell: bash
-      run: doit dist
+      run: jlpm dist:copy
