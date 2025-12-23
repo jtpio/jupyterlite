@@ -20,7 +20,7 @@ dev = [
 test = [
     "pytest>=7",
     "pytest-console-scripts>=1.4.0",
-    "pytest-cov<7",
+    "pytest-cov",
     "pytest-html",
     "pytest-xdist",
     "ansi2html",
@@ -86,6 +86,9 @@ changelog-path = "docs/changelog.md"
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
+
+[tool.coverage.run]
+patch = ["subprocess"]
 
 [tool.ruff]
 target-version = "py39"
