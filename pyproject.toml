@@ -9,6 +9,7 @@ version = "0.8.0a0"
 dev = [
     "hatch>=1.6.3,<2",
     "jupyterlab>=4.6.0a0,<4.7",
+    "jupyterlite-pyodide-kernel>=0.8.0a0",
     "notebook>=7.6.0a0,<7.7",
     "ruff>=0.8.3",
     "pkginfo",
@@ -52,7 +53,7 @@ lint = [
 
 # Demo site extensions
 demo = [
-    "jupyterlite-pyodide-kernel~=0.7.0",
+    "jupyterlite-pyodide-kernel>=0.8.0a0",
     "jupyterlite-p5-kernel~=0.2.0",
     "bqplot~=0.12.43",
     "ipycanvas~=0.13.2",
