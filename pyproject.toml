@@ -130,6 +130,8 @@ ignore = [
 "C408", "C416",
 # RUF012 Mutable class attributes should be annotated with `typing.ClassVar`
 "RUF012",
+# PLC0415 `import` should be at the top-level of a file (allow lazy imports for optional deps)
+"PLC0415",
 ]
 
 [tool.ruff.lint.per-file-ignores]

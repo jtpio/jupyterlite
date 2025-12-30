@@ -3,6 +3,7 @@
 import json
 import re
 import shutil
+import sys
 import tarfile
 import tempfile
 from pathlib import Path
@@ -96,11 +97,15 @@ class StaticAddon(BaseAddon):
 
     def _validate_app_archive(self):
         if self.app_archive is None:
-            self.log.error("[static] No app archive configured")
+            msg = "[static] No app archive configured"
+            self.log.error(msg)
+            print(msg, file=sys.stderr)
             return False
 
         if not self.app_archive.exists():
-            self.log.error(f"[static] App archive path does not exist: {self.app_archive}")
+            msg = f"[static] App archive path does not exist: {self.app_archive}"
+            self.log.error(msg)
+            print(msg, file=sys.stderr)
             return False
 
         error = (
@@ -110,6 +115,7 @@ class StaticAddon(BaseAddon):
         )
         if error:
             self.log.error(error)
+            print(error, file=sys.stderr)
             return False
 
         return True

@@ -10,7 +10,7 @@ from typing import Optional
 @lru_cache(100)
 def has_optional_dependency(importable: str, hint: Optional[str] = None) -> bool:
     """whether a given optional dependency is even installed, with an optional hint"""
-    env_var = f"""JUPYTERLITE_NO_{importable.upper().replace('.','_')}"""
+    env_var = f"""JUPYTERLITE_NO_{importable.upper().replace(".", "_")}"""
 
     if env_var in os.environ and bool(json.loads(os.environ[env_var])):
         return False

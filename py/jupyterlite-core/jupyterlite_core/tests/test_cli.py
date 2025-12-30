@@ -96,24 +96,38 @@ def test_build_rejects_app_archive_dir_without_package_json(
     bad_app_dir.mkdir()
 
     result = script_runner.run(
-        ["jupyter", "lite", "build", "--app-archive", str(bad_app_dir)],
+        [
+            "jupyter",
+            "lite",
+            "--log-level=ERROR",
+            "build",
+            "--app-archive",
+            str(bad_app_dir),
+        ],
         cwd=str(an_empty_lite_dir),
     )
     assert not result.success
     combined = (result.stdout or "") + (result.stderr or "")
-    assert "must contain a package.json" in combined
+    assert "must contain a package.json" in combined, combined[-2000:]
 
 
 def test_build_rejects_missing_app_archive_file(an_empty_lite_dir, script_runner, tmp_path):
     missing_archive = tmp_path / "missing-app.tgz"
 
     result = script_runner.run(
-        ["jupyter", "lite", "build", "--app-archive", str(missing_archive)],
+        [
+            "jupyter",
+            "lite",
+            "--log-level=ERROR",
+            "build",
+            "--app-archive",
+            str(missing_archive),
+        ],
         cwd=str(an_empty_lite_dir),
     )
     assert not result.success
     combined = (result.stdout or "") + (result.stderr or "")
-    assert "does not exist" in combined
+    assert "does not exist" in combined, combined[-2000:]
 
 
 @mark.parametrize("lite_hook", ["list", "status"])

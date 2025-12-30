@@ -23,8 +23,8 @@ You'll need:
 - `jupyterlab >=4.6.0a0,<4.7`
 - `python >=3.12,<3.13`
 
-> **Tip**: You can use any Python package manager you prefer (`pip`,
-> `conda`, etc.) for installing Python dependencies.
+> **Tip**: You can use any Python package manager you prefer (`pip`, `conda`, etc.) for
+> installing Python dependencies.
 
 ### Quick Start
 
@@ -37,8 +37,8 @@ jlpm setup
 This runs:
 
 - `jlpm install` - Install Node.js dependencies
-- `pip install --group dev --group test ...` - Install development dependencies
-  and Python packages in editable mode
+- `pip install --group dev --group test ...` - Install development dependencies and
+  Python packages in editable mode
 
 You can also install dependencies manually:
 
@@ -52,7 +52,8 @@ pip install --group docs             # Documentation tools
 pip install -e './py/jupyterlite-core[all,test]' -e ./py/jupyterlite
 ```
 
-> **Note**: Dependency groups (PEP 735) require pip 24.1+ or [uv](https://docs.astral.sh/uv/).
+> **Note**: Dependency groups (PEP 735) require pip 24.1+ or
+> [uv](https://docs.astral.sh/uv/).
 
 Then build the project:
 
@@ -78,11 +79,11 @@ This uses:
 - `examples/` as the lite directory (notebooks, config)
 - `_site/` as the output directory (symlinked to `app/build/` for live updates)
 
-| Command         | Description                                              |
-| --------------- | -------------------------------------------------------- |
-| `jlpm dev:build`| Build the JupyterLite site to `_site/`                   |
-| `jlpm dev:serve`| Serve `_site/` on http://localhost:8000                  |
-| `jlpm dev:watch`| Watch TypeScript and rebuild directly to `_site/`        |
+| Command          | Description                                       |
+| ---------------- | ------------------------------------------------- |
+| `jlpm dev:build` | Build the JupyterLite site to `_site/`            |
+| `jlpm dev:serve` | Serve `_site/` on http://localhost:8000           |
+| `jlpm dev:watch` | Watch TypeScript and rebuild directly to `_site/` |
 
 #### Adding Kernels and Extensions
 
@@ -95,29 +96,29 @@ jlpm dev:build  # Rebuilds site with the new kernel
 
 ### JavaScript/TypeScript Development
 
-| Command            | Description                                 |
-| ------------------ | ------------------------------------------- |
-| `jlpm build`       | Build libraries and apps (development mode) |
-| `jlpm build:prod`  | Build for production                        |
-| `jlpm watch`       | Watch mode - rebuilds on changes            |
-| `jlpm test`        | Run JavaScript unit tests                   |
-| `jlpm lint`        | Lint and format all code                    |
-| `jlpm lint:check`  | Check linting without fixing                |
+| Command           | Description                                 |
+| ----------------- | ------------------------------------------- |
+| `jlpm build`      | Build libraries and apps (development mode) |
+| `jlpm build:prod` | Build for production                        |
+| `jlpm watch`      | Watch mode - rebuilds on changes            |
+| `jlpm test`       | Run JavaScript unit tests                   |
+| `jlpm lint`       | Lint and format all code                    |
+| `jlpm lint:check` | Check linting without fixing                |
 
 ### Python Development
 
-| Command             | Description                                      |
-| ------------------- | ------------------------------------------------ |
-| `jlpm test:py`      | Run Python tests with coverage                   |
-| `jlpm test:py:quick`| Run Python tests (fast, stop on first failure)  |
+| Command              | Description                                    |
+| -------------------- | ---------------------------------------------- |
+| `jlpm test:py`       | Run Python tests with coverage                 |
+| `jlpm test:py:quick` | Run Python tests (fast, stop on first failure) |
 
 ### Documentation
 
-| Command           | Description                        |
-| ----------------- | ---------------------------------- |
-| `jlpm docs:build` | Build Sphinx documentation         |
+| Command           | Description                         |
+| ----------------- | ----------------------------------- |
+| `jlpm docs:build` | Build Sphinx documentation          |
 | `jlpm docs:serve` | Serve docs on http://localhost:8000 |
-| `jlpm docs:watch` | Watch mode with auto-rebuild       |
+| `jlpm docs:watch` | Watch mode with auto-rebuild        |
 
 ### Building a Custom JupyterLite Site
 

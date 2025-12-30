@@ -241,7 +241,9 @@ jobs:
       - name: Docs (sphinx)
         run: jlpm docs:build
       - name: Check Built Artifacts
-        run: python -m pytest --check-links docs/_build/html --check-links-ignore "https://github.com/.*" --check-links-ignore "https://pypi.org/.*" -q
+        run:
+          python -m pytest --check-links docs/_build/html --check-links-ignore
+          "https://github.com/.*" --check-links-ignore "https://pypi.org/.*" -q
       - name: Test (py)
         run: |
           python -m pytest py/jupyterlite-core/tests -v --cov=jupyterlite_core --cov-report=html:build/htmlcov --cov-report=term-missing --cov-fail-under=82
