@@ -58,6 +58,62 @@ class StaticAddon(BaseAddon):
             ],
         )
 
+    def _validate_app_archive_dir(self):
+        pkg_json_path = self.app_archive / "package.json"
+        if not pkg_json_path.exists():
+            return (
+                "[static] App archive directory must contain a package.json at its root: "
+                f"{pkg_json_path}"
+            )
+
+        try:
+            pkg_data = json.loads(pkg_json_path.read_text(**UTF8))
+        except json.JSONDecodeError as err:
+            return f"[static] Invalid package.json in app archive: {err}"
+
+        jupyterlite_meta = pkg_data.get("jupyterlite") or {}
+        apps = jupyterlite_meta.get("apps")
+        if not isinstance(apps, list):
+            return "[static] App archive package.json must contain a 'jupyterlite.apps' list"
+
+        return None
+
+    def _validate_app_archive_file(self):
+        if not self.app_archive.is_file():
+            return (
+                f"[static] App archive must be a file (tarball) or a directory: {self.app_archive}"
+            )
+
+        try:
+            with tarfile.open(str(self.app_archive), "r:*") as tar:
+                tar.getmember("package/package.json")
+        except KeyError:
+            return "[static] App archive tarball must contain package/package.json"
+        except tarfile.TarError as err:
+            return f"[static] Invalid app archive tarball: {err}"
+
+        return None
+
+    def _validate_app_archive(self):
+        if self.app_archive is None:
+            self.log.error("[static] No app archive configured")
+            return False
+
+        if not self.app_archive.exists():
+            self.log.error(f"[static] App archive path does not exist: {self.app_archive}")
+            return False
+
+        error = (
+            self._validate_app_archive_dir()
+            if self._is_app_archive_dir
+            else self._validate_app_archive_file()
+        )
+        if error:
+            self.log.error(error)
+            return False
+
+        return True
+
     def pre_init(self, manager):
         """well before anything else, we need to ensure that the output_dir exists
         and is empty (if the baseline tarball has changed)
@@ -66,26 +122,32 @@ class StaticAddon(BaseAddon):
 
         task_kwargs = dict(
             name="output_dir",
-            doc="clean out the lite directory",
-            uptodate=[
+            doc="ensure output dir exists and is clean",
+            actions=[
+                (self._validate_app_archive, []),
+                lambda: [output_dir.exists() and shutil.rmtree(output_dir), None][-1],
+                (doit.tools.create_folder, [output_dir]),
+            ],
+            # If the output dir was removed, this task must run again.
+            targets=[output_dir],
+        )
+
+        if self._is_app_archive_dir:
+            # A directory-based app archive is primarily a development workflow.
+            # Always reset the output directory to avoid stale assets and to avoid
+            # interacting with any symlinked output (e.g. _site/build -> app/build).
+            task_kwargs["uptodate"] = [False]
+        else:
+            task_kwargs["file_dep"] = [self.app_archive]
+            task_kwargs["uptodate"] = [
                 doit.tools.config_changed(
                     dict(
                         apps=self.manager.apps,
                         no_sourcemaps=self.manager.no_sourcemaps,
                         no_unused_shared_packages=self.manager.no_unused_shared_packages,
-                        app_archive_is_dir=self._is_app_archive_dir,
                     )
                 )
-            ],
-            actions=[
-                lambda: [output_dir.exists() and shutil.rmtree(output_dir), None][-1],
-                (doit.tools.create_folder, [output_dir]),
-            ],
-        )
-
-        # Only add file_dep on app_archive when it's a file (not a directory)
-        if not self._is_app_archive_dir:
-            task_kwargs["file_dep"] = [self.app_archive]
+            ]
 
         yield self.task(**task_kwargs)
 

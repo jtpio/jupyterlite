@@ -240,7 +240,26 @@ class LiteBuildConfig(LoggingConfigurable):
 
     @default("app_archive")
     def _default_app_archive(self):
-        return Path(os.environ.get("JUPYTERLITE_APP_ARCHIVE") or C.ALL_APP_ARCHIVES[-1])
+        env_app_archive = os.environ.get("JUPYTERLITE_APP_ARCHIVE")
+        if env_app_archive:
+            return Path(env_app_archive)
+
+        if C.ALL_APP_ARCHIVES:
+            return C.ALL_APP_ARCHIVES[-1]
+
+        resolved = Path(__file__).resolve()
+        repo_root_parent_index = 3
+        if len(resolved.parents) > repo_root_parent_index:
+            repo_root = resolved.parents[repo_root_parent_index]
+            app_dir = repo_root / "app"
+            if app_dir.exists():
+                return app_dir
+
+        raise RuntimeError(
+            "No default app archive found. Provide `--app-archive` (or set "
+            "`JUPYTERLITE_APP_ARCHIVE`), or install a distribution that includes a "
+            "packaged `jupyterlite-*.tgz` app archive."
+        )
 
     @default("output_archive")
     def _default_output_archive(self):
@@ -258,7 +277,7 @@ class LiteBuildConfig(LoggingConfigurable):
 
     @default("port")
     def _default_port(self):
-        return int(os.environ.get("JUPYTERLITE_PORT", 8000))
+        return int(os.environ.get("JUPYTERLITE_PORT", "8000"))
 
     @default("base_url")
     def _default_base_url(self):

@@ -46,6 +46,7 @@ jobs:
             ${{ env.CACHE_EPOCH }}-${{ runner.os }}-pip-
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           python -m pip install --group lint --group dev
           jlpm
       - name: Lint
@@ -73,6 +74,7 @@ jobs:
       - uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           python -m pip install --group dev
           jlpm
       - name: Build lib
@@ -218,9 +220,10 @@ jobs:
             ${{ env.CACHE_EPOCH }}-${{ runner.os }}-pip-
       - name: Setup pip (docs)
         run: |
+          python3 -m pip install --upgrade pip
           python3 -m pip install --group docs --group dev --group demo
       - name: Install (py)
-        run: pip install -e './py/jupyterlite-core[all,test]'
+        run: python3 -m pip install -e './py/jupyterlite-core[all,test]'
       - name: Install dependencies
         run: jlpm
       - name: Docs (app)

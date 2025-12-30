@@ -23,7 +23,7 @@ You'll need:
 - `jupyterlab >=4.6.0a0,<4.7`
 - `python >=3.12,<3.13`
 
-> **Tip**: You can use any Python package manager you prefer (`pip`, `pip`,
+> **Tip**: You can use any Python package manager you prefer (`pip`,
 > `conda`, etc.) for installing Python dependencies.
 
 ### Quick Start

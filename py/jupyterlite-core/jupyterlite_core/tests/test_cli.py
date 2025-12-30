@@ -89,6 +89,33 @@ def test_nonzero_rc(lite_args, script_runner):
     assert not a_step.success
 
 
+def test_build_rejects_app_archive_dir_without_package_json(
+    an_empty_lite_dir, script_runner, tmp_path
+):
+    bad_app_dir = tmp_path / "bad-app"
+    bad_app_dir.mkdir()
+
+    result = script_runner.run(
+        ["jupyter", "lite", "build", "--app-archive", str(bad_app_dir)],
+        cwd=str(an_empty_lite_dir),
+    )
+    assert not result.success
+    combined = (result.stdout or "") + (result.stderr or "")
+    assert "must contain a package.json" in combined
+
+
+def test_build_rejects_missing_app_archive_file(an_empty_lite_dir, script_runner, tmp_path):
+    missing_archive = tmp_path / "missing-app.tgz"
+
+    result = script_runner.run(
+        ["jupyter", "lite", "build", "--app-archive", str(missing_archive)],
+        cwd=str(an_empty_lite_dir),
+    )
+    assert not result.success
+    combined = (result.stdout or "") + (result.stderr or "")
+    assert "does not exist" in combined
+
+
 @mark.parametrize("lite_hook", ["list", "status"])
 def test_cli_status_null(lite_hook, an_empty_lite_dir, script_runner):
     """do the "side-effect-free" commands create exactly one file?"""

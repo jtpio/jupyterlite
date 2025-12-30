@@ -5,10 +5,15 @@ version = "0.8.0a0"
 # Dependency groups (PEP 735) for development dependencies
 # Install with: pip install --group dev
 [dependency-groups]
-# Core development
-dev = [
+# Minimal build dependencies (used in CI)
+build = [
     "hatch>=1.6.3,<2",
     "jupyterlab>=4.6.0a0,<4.7",
+]
+
+# Core development
+dev = [
+    { include-group = "build" },
     "jupyterlite-pyodide-kernel>=0.8.0a0",
     "notebook>=7.6.0a0,<7.7",
     "ruff>=0.8.3",
@@ -51,6 +56,12 @@ lint = [
     "nbconvert",
 ]
 
+# Release process
+release = [
+    { include-group = "build" },
+    "jupyter-releaser",
+]
+
 # Demo site extensions
 demo = [
     "jupyterlite-pyodide-kernel>=0.8.0a0",
@@ -76,7 +87,7 @@ demo = [
 skip = [ "build-python", "check-links", "check-python",]
 
 [tool.jupyter-releaser.hooks]
-before-bump-version = [ "python -m pip install jupyter-releaser hatch jupyterlab>=4.5.1,<4.6", "jlpm install", ]
+before-bump-version = [ "python -m pip install --group release", "jlpm install", ]
 after-bump-version = [ "jlpm deduplicate", "jlpm install", "jlpm lint", ]
 before-build-npm = [ "jlpm build:prod", "jlpm pack:app", "jlpm build:py", ]
 after-check-npm = [ "jlpm dist:copy", "rm dist/jupyterlite-app-*.tgz", ]

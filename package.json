@@ -45,7 +45,7 @@
     "eslint:check": "eslint . --ext .ts,.tsx --cache",
     "eslint:fix": "eslint . --ext .ts,.tsx --fix --cache",
     "install": "lerna bootstrap",
-    "install:py": "pip install --group dev --group test -e './py/jupyterlite-core[all,test]' -e ./py/jupyterlite",
+    "install:py": "python -m pip install --upgrade pip && python -m pip install --group dev --group test -e './py/jupyterlite-core[all,test]' -e ./py/jupyterlite",
     "lint": "jlpm prettier:fix && jlpm eslint:fix && jlpm lint:py",
     "lint:check": "jlpm prettier:check && jlpm eslint:check && jlpm lint:py:check",
     "lint:py": "ruff format . && ruff check . --fix",

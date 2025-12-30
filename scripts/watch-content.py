@@ -24,6 +24,7 @@ def should_ignore(path: Path) -> bool:
 
 def setup_symlink():
     """Set up the _site/build -> app/build symlink, preserving schema files."""
+    SITE_DIR.mkdir(parents=True, exist_ok=True)
     build_dir = SITE_DIR / "build"
 
     # If already a symlink, nothing to do

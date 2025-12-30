@@ -10,7 +10,7 @@ runs:
       shell: bash
       run: |
         python3 -m pip install --user -U pip setuptools wheel
-        python3 -m pip install hatch jupyterlab>=4.5.1,<4.6
+        python3 -m pip install --group build
 
     - name: Install JS dependencies
       shell: bash
