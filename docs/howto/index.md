@@ -20,6 +20,7 @@ configure/kernels
 configure/simple_extensions
 configure/storage
 configure/settings
+configure/custom_css
 configure/translation
 configure/rtc
 configure/config_files
