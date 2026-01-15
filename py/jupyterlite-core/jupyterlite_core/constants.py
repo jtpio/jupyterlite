@@ -73,6 +73,9 @@ JUPYTERLITE_SCHEMA = "jupyterlite.schema.v0.json"
 #: our configuration file
 JUPYTERLITE_JSON = "jupyter-lite.json"
 
+#: custom CSS file (top-level, like overrides.json)
+CUSTOM_CSS = "custom.css"
+
 #: our configuration file
 JUPYTERLITE_IPYNB = "jupyter-lite.ipynb"
 JUPYTERLITE_METADATA = "jupyter-lite"
