@@ -1,0 +1,44 @@
+Fetching releases from jupyterlab/jupyterlab...
+  Resolved version: 4.6.0a1
+Fetching releases from jupyter/notebook...
+  Resolved version: 7.6.0a1
+
+Updating pyproject.toml files...
+  Updated py/jupyterlite/pyproject.toml
+
+Updating package.json files...
+Fetching JupyterLab 4.6.0a1 package.json files...
+Fetching Notebook 7.6.0a1 package.json files...
+  Updated app/consoles/package.json
+  Updated app/edit/package.json
+  Updated app/lab/package.json
+  Updated app/notebooks/package.json
+  Updated app/package.json
+  Updated app/repl/package.json
+  Updated app/tree/package.json
+  Updated package.json
+  Updated packages/application/package.json
+  Updated packages/application-extension/package.json
+  Updated packages/apputils/package.json
+  Updated packages/apputils-extension/package.json
+  Updated packages/iframe-extension/package.json
+  Updated packages/localforage/package.json
+  Updated packages/notebook-application-extension/package.json
+  Updated packages/repl-extension/package.json
+  Updated packages/services/package.json
+  Updated packages/services-extension/package.json
+  Updated packages/ui-components/package.json
+  Updated ui-tests/package.json
+
+Package.json files updated
+
+==================================================
+Summary:
+  JupyterLab: 4.6.0a1
+  Notebook: 7.6.0a1
+
+Next steps:
+  1. Run 'jlpm install' to update yarn.lock
+  2. Run 'jlpm deduplicate' to clean up duplicates
+  3. Run 'jlpm integrity' to update app resolutions
+  4. Test the build with 'jlpm build'
