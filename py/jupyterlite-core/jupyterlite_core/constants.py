@@ -73,8 +73,7 @@ JUPYTERLITE_SCHEMA = "jupyterlite.schema.v0.json"
 #: our configuration file
 JUPYTERLITE_JSON = "jupyter-lite.json"
 
-#: custom CSS directory and file (mirrors JupyterLab's custom/ convention)
-CUSTOM_DIR = "custom"
+#: custom CSS file (top-level, like overrides.json)
 CUSTOM_CSS = "custom.css"
 
 #: our configuration file
