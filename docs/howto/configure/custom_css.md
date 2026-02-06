@@ -105,53 +105,60 @@ This will show the count of `custom.css` files found in your source directory.
 
 ## Advanced: Per-App Custom CSS
 
-You can also create app-specific custom CSS files that only apply to a particular
+You can also create app-specific custom CSS files that apply to a particular
 application. Place the CSS file in the corresponding app directory:
 
 ```
 {lite-dir}/
-├── custom.css           # Applied to all apps (unless app has its own)
+├── custom.css           # Base styles applied to all apps
 ├── lab/
-│   └── custom.css       # Applied only to JupyterLab
+│   └── custom.css       # Additional styles for JupyterLab
 ├── repl/
-│   └── custom.css       # Applied only to the REPL
+│   └── custom.css       # Additional styles for the REPL
 └── notebooks/
-    └── custom.css       # Applied only to Jupyter Notebook
+    └── custom.css       # Additional styles for Jupyter Notebook
 ```
 
-**Precedence rules:**
+**Merging behavior:**
 
-- If an app has its own `custom.css`, only that CSS is used for that app
-- If an app does not have its own `custom.css`, the root `custom.css` is used (if it
-  exists)
-- App-specific CSS completely overrides the root CSS for that app (they are not merged)
+- When both root and app-specific CSS exist, they are **merged**: root CSS is included
+  first, followed by app-specific CSS
+- This allows app CSS to override root styles via CSS cascade while inheriting common
+  base styles
+- If an app does not have its own `custom.css`, only the root `custom.css` is used
+- If only app-specific CSS exists (no root), it is used standalone
 
-This allows you to have different styling for different JupyterLite applications. For
-example, you could style the REPL minimally while giving JupyterLab a more elaborate
-theme.
+This allows you to define common base styles in the root `custom.css` and add
+app-specific customizations that build on top of them.
 
-### Example: Different Styles per App
+### Example: Base Styles with App Overrides
 
-Create different custom CSS files for each app:
+Define common styles in the root CSS:
 
 ```css
-/* lab/custom.css - Full-featured lab styling */
-.jp-Notebook {
-  background-color: #f0f4f8;
+/* custom.css - Base styles for all apps */
+:root {
+  --brand-color: #2196f3;
 }
 
 #jp-top-bar {
-  background-color: #2196f3;
+  background-color: var(--brand-color);
 }
 ```
 
+Then add app-specific overrides:
+
 ```css
-/* repl/custom.css - Minimal REPL styling */
-body {
-  background-color: #1a1a2e;
+/* repl/custom.css - REPL-specific overrides */
+/* These styles are merged with the root CSS */
+:root {
+  --brand-color: #4caf50; /* Override brand color for REPL */
 }
 
 .jp-CodeConsole {
-  background-color: #16213e;
+  background-color: #1a1a2e;
 }
 ```
+
+The REPL will receive both the base styles and its overrides, with the app-specific
+styles taking precedence via CSS cascade.
