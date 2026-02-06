@@ -10,7 +10,8 @@ via CSS cascade while inheriting common base styles.
 """
 
 import hashlib
-from html.parser import HTMLParser
+import os
+import re
 from pathlib import Path
 
 from ..constants import CUSTOM_CSS, INDEX_HTML, UTF8
@@ -18,79 +19,11 @@ from .base import BaseAddon
 
 CUSTOM_CSS_LINK_ID = "jupyterlite-custom-css"
 
-
-class CSSLinkInjector(HTMLParser):
-    """HTML parser that removes existing custom CSS links and injects a new one.
-
-    This parser rebuilds the HTML while:
-    - Skipping any existing <link> tags with id="jupyterlite-custom-css"
-    - Injecting a new custom CSS link tag before </head>
-    """
-
-    def __init__(self, link_tag: str):
-        super().__init__(convert_charrefs=False)
-        self.link_tag = link_tag
-        self.output: list[str] = []
-        self.head_closed = False
-
-    def get_output(self) -> str:
-        return "".join(self.output)
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]):
-        if self._is_custom_css_link(tag, attrs):
-            return
-        self.output.append(self._build_tag(tag, attrs))
-
-    def handle_endtag(self, tag: str):
-        if tag.lower() == "head" and not self.head_closed:
-            self.output.append(self.link_tag)
-            self.head_closed = True
-        self.output.append(f"</{tag}>")
-
-    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]):
-        if self._is_custom_css_link(tag, attrs):
-            return
-        self.output.append(self._build_tag(tag, attrs, self_closing=True))
-
-    def handle_data(self, data: str):
-        self.output.append(data)
-
-    def handle_comment(self, data: str):
-        self.output.append(f"<!--{data}-->")
-
-    def handle_decl(self, decl: str):
-        self.output.append(f"<!{decl}>")
-
-    def handle_pi(self, data: str):
-        self.output.append(f"<?{data}>")
-
-    def handle_entityref(self, name: str):
-        self.output.append(f"&{name};")
-
-    def handle_charref(self, name: str):
-        self.output.append(f"&#{name};")
-
-    def _is_custom_css_link(self, tag: str, attrs: list[tuple[str, str | None]]) -> bool:
-        """Check if this is our custom CSS link tag."""
-        if tag.lower() != "link":
-            return False
-        return any(
-            name.lower() == "id" and value and value.lower() == CUSTOM_CSS_LINK_ID
-            for name, value in attrs
-        )
-
-    def _build_tag(
-        self, tag: str, attrs: list[tuple[str, str | None]], self_closing: bool = False
-    ) -> str:
-        """Rebuild an HTML tag from its components."""
-        if not attrs:
-            return f"<{tag} />" if self_closing else f"<{tag}>"
-        attr_str = " ".join(
-            f'{name}="{value}"' if value is not None else name for name, value in attrs
-        )
-        if self_closing:
-            return f"<{tag} {attr_str} />"
-        return f"<{tag} {attr_str}>"
+# Pattern to match existing custom CSS link tags (including surrounding whitespace)
+_CUSTOM_CSS_LINK_RE = re.compile(
+    r"\s*<link[^>]*id=[\"']jupyterlite-custom-css[\"'][^>]*/?>",
+    re.IGNORECASE,
+)
 
 
 class CustomCSSAddon(BaseAddon):
@@ -166,16 +99,15 @@ class CustomCSSAddon(BaseAddon):
         if not apps_with_css:
             return
 
-        index_files = sorted(manager.output_dir.rglob(INDEX_HTML))
-        if not index_files:
-            return
-
-        for index_file in index_files:
-            app_for_index = self._get_app_for_index(index_file)
+        for app in [None, *manager.apps]:
+            app_dir = manager.output_dir / app if app else manager.output_dir
+            index_file = app_dir / INDEX_HTML
+            if not index_file.exists():
+                continue
 
             # Use app-specific CSS if available, otherwise fall back to root
-            if app_for_index in apps_with_css:
-                css_app = app_for_index
+            if app in apps_with_css:
+                css_app = app
             elif None in apps_with_css:
                 css_app = None
             else:
@@ -216,17 +148,6 @@ class CustomCSSAddon(BaseAddon):
         base = self.manager.output_dir / app if app else self.manager.output_dir
         return base / "static" / CUSTOM_CSS
 
-    def _get_app_for_index(self, index_file: Path) -> str | None:
-        """Determine which app an index.html file belongs to.
-
-        Returns None if the index.html is at the root level.
-        """
-        rel_path = index_file.relative_to(self.manager.output_dir)
-        parts = rel_path.parts
-        if len(parts) == 1:
-            return None
-        return parts[0]
-
     def _inject_css_link(self, index_file: Path, css_dest: Path, css_hash: str):
         """Inject a <link> tag for custom.css into an index.html file.
 
@@ -238,6 +159,9 @@ class CustomCSSAddon(BaseAddon):
             self.log.warning(f"[lite] [customcss] no </head> found in {index_file}, skipping")
             return
 
+        # Remove any existing custom CSS link for idempotency
+        content = _CUSTOM_CSS_LINK_RE.sub("", content)
+
         rel_path = self._get_relative_css_path(index_file, css_dest)
         link_tag = (
             f'    <link id="{CUSTOM_CSS_LINK_ID}" '
@@ -245,26 +169,17 @@ class CustomCSSAddon(BaseAddon):
             f'href="{rel_path}?_={css_hash[:8]}">\n  '
         )
 
-        parser = CSSLinkInjector(link_tag)
-        parser.feed(content)
-        new_content = parser.get_output()
+        # Inject the link tag before </head>
+        content = content.replace("</head>", f"{link_tag}</head>", 1)
 
-        index_file.write_text(new_content, **UTF8)
+        index_file.write_text(content, **UTF8)
         self.maybe_timestamp(index_file)
         self.log.debug(f"[lite] [customcss] injected link into {index_file}")
 
     def _get_relative_css_path(self, index_file: Path, css_dest: Path) -> str:
         """Calculate the relative path from an index.html to the custom.css file."""
-        output_dir = self.manager.output_dir
-        css_rel = css_dest.relative_to(output_dir)
-        index_rel = index_file.parent.relative_to(output_dir)
-        levels_up = len(index_rel.parts)
-
-        if levels_up == 0:
-            return f"./{css_rel.as_posix()}"
-
-        prefix = "/".join([".."] * levels_up)
-        return f"{prefix}/{css_rel.as_posix()}"
+        rel = Path(os.path.relpath(css_dest, index_file.parent))
+        return rel.as_posix()
 
     def _get_file_hash(self, path: Path) -> str:
         """Calculate a SHA256 hash of a file for cache busting."""

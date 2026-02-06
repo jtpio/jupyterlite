@@ -81,10 +81,10 @@ def test_custom_css_per_app(an_empty_lite_dir, script_runner):
     lab_html = lab_index.read_text()
     assert "../static/custom.css" in lab_html
 
-    # REPL should use its own merged CSS
+    # REPL should use its own merged CSS (relative to repl/, not root)
     repl_index = output / "repl" / "index.html"
     repl_html = repl_index.read_text()
-    assert "repl/static/custom.css" in repl_html
+    assert 'href="static/custom.css' in repl_html
 
 
 def test_custom_css_status(an_empty_lite_dir, script_runner):
