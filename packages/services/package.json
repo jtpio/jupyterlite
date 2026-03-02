@@ -55,6 +55,7 @@
     "async-mutex": "^0.3.1",
     "comlink": "^4.3.1",
     "json5": "^2.2.0",
+    "jupyterlab-browser-storage": "^0.1.1",
     "localforage": "^1.9.0",
     "mime": "^3.0.0",
     "mock-socket": "^9.3.1"

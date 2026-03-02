@@ -11,7 +11,11 @@ import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 
 import { IDocumentManager, IDocumentWidgetOpener } from '@jupyterlab/docmanager';
 
-import { IDefaultFileBrowser, IFileBrowserFactory } from '@jupyterlab/filebrowser';
+import {
+  DirListing,
+  IDefaultFileBrowser,
+  IFileBrowserFactory,
+} from '@jupyterlab/filebrowser';
 
 import {
   DocumentConnectionManager,
@@ -30,6 +34,7 @@ import {
 
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
+import type { TranslationBundle } from '@jupyterlab/translation';
 import { ITranslator } from '@jupyterlab/translation';
 
 import { clearIcon, downloadIcon, linkIcon } from '@jupyterlab/ui-components';
@@ -90,6 +95,116 @@ namespace CommandIDs {
  */
 
 const I18N_BUNDLE = 'jupyterlite';
+const CONTENT_LAYER = 'jupyterlite:content-layer' as const;
+const DRIVE_LAYER_BADGE_CLASS = 'jp-DriveLayerBadge';
+const DRIVE_LAYER_BADGE_PATCH_FLAG = '__jupyterliteDriveLayerBadgesPatched__';
+type TContentLayer = 'server' | 'writable' | 'writable-override';
+
+type ILayeredContentModel = Contents.IModel & {
+  [CONTENT_LAYER]?: TContentLayer;
+};
+
+interface ILayerBadgeDescription {
+  className: string;
+  label: string;
+  title: string;
+}
+
+interface IPatchedDirListingRenderer extends DirListing.IRenderer {
+  [DRIVE_LAYER_BADGE_PATCH_FLAG]?: boolean;
+}
+
+const driveLayerBadgeDescription = (
+  layer: TContentLayer | undefined,
+  trans: TranslationBundle,
+): ILayerBadgeDescription | null => {
+  if (layer === 'server') {
+    return {
+      className: 'jp-mod-server',
+      label: trans.__('Server'),
+      title: trans.__('Read from site assets'),
+    };
+  }
+
+  if (layer === 'writable') {
+    return {
+      className: 'jp-mod-writable',
+      label: trans.__('Writable'),
+      title: trans.__('Saved in browser storage'),
+    };
+  }
+
+  if (layer === 'writable-override') {
+    return {
+      className: 'jp-mod-override',
+      label: trans.__('Override'),
+      title: trans.__('Writable copy overrides a server file'),
+    };
+  }
+
+  return null;
+};
+
+const updateDriveLayerBadge = (
+  itemNode: HTMLElement,
+  model: ILayeredContentModel,
+  trans: TranslationBundle,
+): void => {
+  const iconNode = itemNode.querySelector<HTMLElement>('.jp-DirListing-itemIcon');
+  const nameNode = itemNode.querySelector<HTMLElement>('.jp-DirListing-itemName');
+
+  if (!iconNode && !nameNode) {
+    return;
+  }
+
+  const description = driveLayerBadgeDescription(model[CONTENT_LAYER], trans);
+  const existingBadge = itemNode.querySelector<HTMLElement>(
+    `.${DRIVE_LAYER_BADGE_CLASS}`,
+  );
+
+  if (!description) {
+    existingBadge?.remove();
+    return;
+  }
+
+  const badge = existingBadge ?? document.createElement('span');
+  const tooltip = trans.__('%1: %2', description.label, description.title);
+  badge.className = `${DRIVE_LAYER_BADGE_CLASS} ${description.className}`;
+  badge.textContent = '';
+  badge.title = tooltip;
+  badge.setAttribute('aria-label', tooltip);
+  badge.setAttribute('role', 'img');
+
+  if (iconNode?.parentElement) {
+    iconNode.insertAdjacentElement('afterend', badge);
+    return;
+  }
+
+  if (nameNode) {
+    nameNode.prepend(badge);
+  }
+};
+
+const patchDirListingRenderer = (trans: TranslationBundle): void => {
+  const renderer = DirListing.defaultRenderer as IPatchedDirListingRenderer;
+
+  if (renderer[DRIVE_LAYER_BADGE_PATCH_FLAG]) {
+    return;
+  }
+
+  const originalUpdateItemNode = renderer.updateItemNode.bind(renderer);
+
+  renderer.updateItemNode = ((
+    ...args: Parameters<DirListing.IRenderer['updateItemNode']>
+  ) => {
+    originalUpdateItemNode(...args);
+
+    const [itemNode, model] = args;
+    updateDriveLayerBadge(itemNode, model as ILayeredContentModel, trans);
+  }) as DirListing.IRenderer['updateItemNode'];
+
+  renderer[DRIVE_LAYER_BADGE_PATCH_FLAG] = true;
+};
 
 /**
  * The custom URL router provider.
@@ -354,6 +469,33 @@ const downloadPlugin: JupyterFrontEndPlugin<void> = {
         label: trans.__('Download'),
       });
     }
+  },
+};
+
+/**
+ * A plugin to annotate file browser items with server/writable layer badges.
+ */
+const driveLayerBadges: JupyterFrontEndPlugin<void> = {
+  id: '@jupyterlite/application-extension:drive-layer-badges',
+  autoStart: true,
+  requires: [IFileBrowserFactory, ITranslator],
+  activate: (
+    _: JupyterFrontEnd,
+    factory: IFileBrowserFactory,
+    translator: ITranslator,
+  ): void => {
+    const trans = translator.load(I18N_BUNDLE);
+    patchDirListingRenderer(trans);
+
+    factory.tracker.forEach((browser) => {
+      browser.addClass('jp-DriveLayerBadges');
+      void browser.model.refresh();
+    });
+
+    factory.tracker.widgetAdded.connect((_, browser) => {
+      browser.addClass('jp-DriveLayerBadges');
+      void browser.model.refresh();
+    });
   },
 };
 
@@ -824,6 +966,7 @@ const modeSupport: JupyterFrontEndPlugin<void> = {
 const plugins: JupyterFrontEndPlugin<any>[] = [
   about,
   clearBrowserData,
+  driveLayerBadges,
   downloadPlugin,
   liteRouter,
   liteLogo,
