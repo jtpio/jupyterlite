@@ -595,10 +595,9 @@ const opener: JupyterFrontEndPlugin<void> = {
         if (paths.length === 0) {
           return;
         }
-        const files = paths.map((path) => decodeURIComponent(path));
         app.started.then(async () => {
           const page = PageConfig.getOption('notebookPage');
-          const [file] = files;
+          const [file] = paths;
           if (page === 'tree') {
             let appUrl = '/edit';
             // check if the file is a notebook
@@ -650,7 +649,7 @@ const opener: JupyterFrontEndPlugin<void> = {
             });
           } else {
             // open all files in the lab interface
-            files.forEach((file) => docManager.openOrReveal(file));
+            paths.forEach((file) => docManager.openOrReveal(file));
             const url = new URL(URLExt.join(PageConfig.getBaseUrl(), request));
             // only remove the path (to keep extra parameters like the RTC room)
             url.searchParams.delete('path');
