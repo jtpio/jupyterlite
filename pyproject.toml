@@ -139,6 +139,7 @@ before-bump-version = ["python -m pip install --group release", "jlpm install"]
 after-bump-version = ["jlpm deduplicate", "jlpm install", "jlpm lint"]
 before-build-npm = ["jlpm build:prod", "jlpm pack:app"]
 after-check-npm = ["jlpm build:py"]
+before-check-python = ["jlpm build:py"]
 
 [tool.jupyter-releaser.options]
 version-cmd = "python scripts/bump-version.py"
