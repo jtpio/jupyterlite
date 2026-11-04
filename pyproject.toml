@@ -132,7 +132,7 @@ all-dev = [
 ]
 
 [tool.jupyter-releaser]
-skip = ["build-python", "check-links"]
+skip = ["build-python", "check-links", "check-npm"]
 
 [tool.jupyter-releaser.hooks]
 before-bump-version = ["python -m pip install --group release", "jlpm install"]
